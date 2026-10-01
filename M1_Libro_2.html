@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M1 – Panorama dell'IA nella scuola | Libro</title>
+<style>
+:root {
+  --navy: #1A3560;
+  --teal: #0D7C8F;
+  --amber: #E8820C;
+  --green: #1A7A4A;
+  --red: #C0392B;
+  --bg: #F7F9FC;
+  --sidebar-w: 260px;
+  --text: #1a1a2e;
+  --muted: #5a6a80;
+  --border: #D0DCE8;
+  --card: #ffffff;
+  --note-bg: #EAF5F7;
+  --warn-bg: #FFF8EC;
+  --stable-bg: #EBF5EB;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--navy);
+  color: #fff;
+  padding: 0 1.25rem;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.topbar .burger {
+  display: none;
+  background: none; border: none; cursor: pointer;
+  color: #fff; font-size: 1.4rem; padding: 0 4px;
+}
+.topbar .module-tag {
+  background: var(--teal);
+  color: #fff;
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.topbar .title {
+  font-family: 'Calibri', sans-serif;
+  font-size: 1.0rem;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar .progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+.progress-bar {
+  width: 100px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ── LAYOUT ── */
+.shell {
+  display: flex;
+  margin-top: 52px;
+  min-height: calc(100vh - 52px);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--navy);
+  color: #fff;
+  position: fixed;
+  top: 52px; bottom: 0; left: 0;
+  overflow-y: auto;
+  z-index: 150;
+  transition: transform 0.25s ease;
+}
+.sidebar.closed { transform: translateX(-100%); }
+
+.sidebar-inner { padding: 1rem 0 2rem; }
+
+.sidebar-section-label {
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  padding: 1rem 1.1rem 0.3rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+  text-decoration: none;
+  color: rgba(255,255,255,0.78);
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.nav-item.active {
+  background: rgba(13,124,143,0.25);
+  border-left-color: var(--teal);
+  color: #fff;
+  font-weight: 700;
+}
+.nav-item .num {
+  min-width: 1.4rem;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  font-family: 'Calibri', sans-serif;
+  padding-top: 1px;
+}
+.nav-item.active .num { color: var(--teal); }
+
+.nav-item .done-mark {
+  margin-left: auto;
+  color: #4CAF50;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.nav-item.visited .done-mark { opacity: 1; }
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  padding: 2rem 2.5rem 4rem;
+  max-width: 900px;
+}
+
+.page { display: none; animation: fadeIn 0.2s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── TYPOGRAPHY ── */
+.chapter-label {
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+.chapter-title {
+  font-family: 'Calibri', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+.chapter-divider {
+  height: 3px;
+  width: 60px;
+  background: var(--teal);
+  border-radius: 2px;
+  margin: 0.8rem 0 1.5rem;
+}
+h2.section-h {
+  font-family: 'Calibri', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 1.8rem 0 0.6rem;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--border);
+}
+h3.subsection-h {
+  font-family: 'Calibri', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--teal);
+  margin: 1.4rem 0 0.5rem;
+}
+p {
+  line-height: 1.75;
+  margin-bottom: 0.9rem;
+  font-size: 1.01rem;
+}
+ul, ol {
+  margin: 0.5rem 0 0.9rem 1.5rem;
+  line-height: 1.7;
+}
+li { margin-bottom: 0.3rem; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 6px;
+  padding: 0.9rem 1.1rem;
+  margin: 1.2rem 0;
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+.callout-stable {
+  background: var(--stable-bg);
+  border-left: 4px solid var(--green);
+  color: #1a4a2a;
+}
+.callout-stable strong { color: var(--green); }
+.callout-warn {
+  background: var(--warn-bg);
+  border-left: 4px solid var(--amber);
+  color: #5a3800;
+}
+.callout-warn strong { color: var(--amber); }
+.callout-note {
+  background: var(--note-bg);
+  border-left: 4px solid var(--teal);
+  color: #1a3a45;
+}
+.callout-note strong { color: var(--teal); }
+
+/* ── TABLES ── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.4rem;
+  font-size: 0.92rem;
+  font-family: 'Calibri', sans-serif;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.data-table th {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  line-height: 1.35;
+}
+.data-table td {
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.55;
+  vertical-align: top;
+}
+.data-table tr:nth-child(even) td { background: #F0F4F8; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #E8F4F6; transition: background 0.15s; }
+
+.teal-header th { background: var(--teal); }
+
+/* ── LEVEL CARDS ── */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+.level-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.level-card .lc-num {
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--teal);
+  margin-bottom: 0.3rem;
+}
+.level-card .lc-title {
+  font-family: 'Calibri', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.6rem;
+}
+.level-card p { font-size: 0.88rem; color: #3a4a5a; margin-bottom: 0.4rem; }
+.level-card .lc-risk {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: 'Calibri', sans-serif;
+}
+.risk-low { background: #E8F5E9; color: #1a4a2a; }
+.risk-med { background: #FFF8E1; color: #5a3800; }
+.risk-high { background: #FDECEA; color: #7a1a1a; }
+
+/* ── GLOSSARY ── */
+.gloss-grid {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.gloss-item {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.92rem;
+}
+.gloss-term {
+  font-family: 'Calibri', sans-serif;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.88rem;
+}
+.gloss-def { color: #3a4a5a; line-height: 1.55; }
+
+/* ── CASE BOXES ── */
+.case-box {
+  border: 2px solid var(--teal);
+  border-radius: 8px;
+  margin: 1.2rem 0;
+  overflow: hidden;
+}
+.case-box-hdr {
+  background: var(--teal);
+  color: #fff;
+  font-family: 'Calibri', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.6rem 1rem;
+}
+.case-box-body { padding: 1rem; }
+.case-box-body p { font-size: 0.94rem; margin-bottom: 0.7rem; }
+.case-box-body .tag {
+  display: inline-block;
+  background: #E8F4F6;
+  color: var(--teal);
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 0.4rem;
+}
+.case-box-body .tag-ok { background: #E8F5E9; color: var(--green); }
+
+/* ── STRATEGY CARDS ── */
+.strategy-list { margin: 1rem 0; }
+.strategy-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.strategy-item:last-child { border-bottom: none; }
+.strategy-num {
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-family: 'Calibri', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.strategy-content .st-title {
+  font-family: 'Calibri', sans-serif;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+.strategy-content p { font-size: 0.92rem; margin: 0; }
+
+/* ── CHECKLIST ── */
+.checklist {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+}
+.checklist-title {
+  font-family: 'Calibri', sans-serif;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.92rem;
+}
+.check-item:last-child { border-bottom: none; }
+.check-item input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--teal);
+  width: 16px; height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.check-item label { cursor: pointer; line-height: 1.55; }
+.check-item input:checked + label { text-decoration: line-through; color: var(--muted); }
+
+/* ── COVER PAGE ── */
+.cover-wrap {
+  background: linear-gradient(135deg, var(--navy) 0%, #0e2040 100%);
+  border-radius: 12px;
+  padding: 3rem;
+  color: #fff;
+  margin-bottom: 2rem;
+}
+.cover-module { font-family:'Calibri',sans-serif; font-size:0.8rem; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.5); margin-bottom:0.75rem; }
+.cover-title { font-family:'Calibri',sans-serif; font-size:2.5rem; font-weight:900; line-height:1.15; color:#fff; margin-bottom:0.5rem; }
+.cover-subtitle { font-size:1.1rem; color:rgba(255,255,255,0.7); margin-bottom:1.5rem; }
+.cover-meta {
+  display: flex; gap: 1.5rem; flex-wrap: wrap;
+}
+.cover-meta-item { font-family:'Calibri',sans-serif; font-size:0.85rem; color:rgba(255,255,255,0.6); }
+.cover-meta-item strong { color:#fff; display:block; font-size:0.9rem; }
+.cover-toc { margin-top:2rem; }
+.cover-toc-title { font-family:'Calibri',sans-serif; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:0.75rem; }
+.cover-toc-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.4rem 2rem; }
+.cover-toc-item { font-family:'Calibri',sans-serif; font-size:0.88rem; color:rgba(255,255,255,0.75); display:flex; gap:0.5rem; cursor:pointer; }
+.cover-toc-item:hover { color:#fff; }
+.cover-toc-item .ci-num { color:rgba(255,255,255,0.35); min-width:1.2rem; }
+
+/* ── REFS ── */
+.ref-item {
+  font-size:0.88rem;
+  padding:0.4rem 0;
+  border-bottom:1px solid var(--border);
+  line-height:1.6;
+  color: #3a4a5a;
+}
+.ref-item:last-child{border:none;}
+.ref-item a{color:var(--teal);}
+
+/* ── UNESCO TABLE ── */
+.unesco-row td:first-child { color: var(--navy); font-weight: 700; font-family:'Calibri',sans-serif; }
+
+/* ── NAVIGATION ── */
+.page-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border);
+}
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 6px;
+  border: 2px solid var(--teal);
+  background: #fff;
+  color: var(--teal);
+  font-family: 'Calibri', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nav-btn:hover { background: var(--teal); color: #fff; }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+.nav-btn:disabled:hover { background: #fff; color: var(--teal); }
+.nav-btn.primary { background: var(--teal); color: #fff; }
+.nav-btn.primary:hover { background: #0a6070; }
+.page-indicator {
+  font-family: 'Calibri', sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .topbar .burger { display: block; }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 1.2rem 1rem 3rem; }
+  .level-grid { grid-template-columns: 1fr; }
+  .cover-toc-grid { grid-template-columns: 1fr; }
+  .gloss-item { grid-template-columns: 1fr; }
+  .cover-title { font-size: 1.8rem; }
+  .progress-wrap .progress-bar { display: none; }
+  .overlay { display: block !important; }
+}
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 140;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <button class="burger" onclick="toggleSidebar()">☰</button>
+  <span class="module-tag">M1</span>
+  <span class="title">Panorama dell'IA nella scuola</span>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <span id="prog-text">1 / 12</span>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- SHELL -->
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-inner">
+    <div class="sidebar-section-label">Modulo 1</div>
+
+    <div class="nav-item active" data-page="0" onclick="goTo(0)">
+      <span class="num">◉</span>
+      <span>Copertina</span>
+      <span class="done-mark">✓</span>
+    </div>
+
+    <div class="sidebar-section-label">Capitoli</div>
+    <div class="nav-item" data-page="1" onclick="goTo(1)">
+      <span class="num">1</span><span>Introduzione</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="2" onclick="goTo(2)">
+      <span class="num">2</span><span>Definizioni operative</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="3" onclick="goTo(3)">
+      <span class="num">3</span><span>Quadro normativo</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="4" onclick="goTo(4)">
+      <span class="num">4</span><span>Strumenti IA</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="5" onclick="goTo(5)">
+      <span class="num">5</span><span>I tre livelli d'uso</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="6" onclick="goTo(6)">
+      <span class="num">6</span><span>Criteri di scelta</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="7" onclick="goTo(7)">
+      <span class="num">7</span><span>Bias e allucinazioni</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="8" onclick="goTo(8)">
+      <span class="num">8</span><span>Governance d'istituto</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="9" onclick="goTo(9)">
+      <span class="num">9</span><span>Casi d'uso</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="10" onclick="goTo(10)">
+      <span class="num">10</span><span>Il formatore interno</span><span class="done-mark">✓</span>
+    </div>
+
+    <div class="sidebar-section-label">Appendici</div>
+    <div class="nav-item" data-page="11" onclick="goTo(11)">
+      <span class="num">G</span><span>Glossario</span><span class="done-mark">✓</span>
+    </div>
+    <div class="nav-item" data-page="12" onclick="goTo(12)">
+      <span class="num">R</span><span>Riferimenti</span><span class="done-mark">✓</span>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ═══════════════════════════════
+     PAGE 0 — COPERTINA
+═══════════════════════════════ -->
+<div class="page active" id="page-0">
+  <div class="cover-wrap">
+    <div class="cover-module">Corso · Formare i formatori sull'IA nella scuola · Incontro 1 · 3 ore</div>
+    <div class="cover-title">Panorama degli strumenti di Intelligenza Artificiale per l'educazione</div>
+    <div class="cover-subtitle">Modulo 1 · Dispensa del partecipante</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><strong>3 ore</strong>Durata modulo</div>
+      <div class="cover-meta-item"><strong>12 capitoli</strong>di lettura</div>
+      <div class="cover-meta-item"><strong>IC Nicolai</strong>A.S. 2025/2026</div>
+    </div>
+    <div class="cover-toc">
+      <div class="cover-toc-title">Indice</div>
+      <div class="cover-toc-grid">
+        <div class="cover-toc-item" onclick="goTo(1)"><span class="ci-num">1.</span>Introduzione</div>
+        <div class="cover-toc-item" onclick="goTo(2)"><span class="ci-num">2.</span>Cos'è l'IA: definizioni operative</div>
+        <div class="cover-toc-item" onclick="goTo(3)"><span class="ci-num">3.</span>Il quadro normativo</div>
+        <div class="cover-toc-item" onclick="goTo(4)"><span class="ci-num">4.</span>Strumenti IA: categorie e criteri</div>
+        <div class="cover-toc-item" onclick="goTo(5)"><span class="ci-num">5.</span>I tre livelli d'uso</div>
+        <div class="cover-toc-item" onclick="goTo(6)"><span class="ci-num">6.</span>Criteri di scelta responsabile</div>
+        <div class="cover-toc-item" onclick="goTo(7)"><span class="ci-num">7.</span>Bias e allucinazioni</div>
+        <div class="cover-toc-item" onclick="goTo(8)"><span class="ci-num">8.</span>Governance d'istituto</div>
+        <div class="cover-toc-item" onclick="goTo(9)"><span class="ci-num">9.</span>Casi d'uso per ordine</div>
+        <div class="cover-toc-item" onclick="goTo(10)"><span class="ci-num">10.</span>Il formatore interno</div>
+        <div class="cover-toc-item" onclick="goTo(11)"><span class="ci-num">G.</span>Glossario</div>
+        <div class="cover-toc-item" onclick="goTo(12)"><span class="ci-num">R.</span>Riferimenti</div>
+      </div>
+    </div>
+  </div>
+  <div class="callout callout-note">
+    <strong>Come leggere questo libro</strong><br>
+    Usa la barra laterale a sinistra per navigare tra i capitoli. Ogni pagina corrisponde a un capitolo della dispensa. Puoi leggere in sequenza o saltare ai capitoli che ti interessano usando il menu. I capitoli letti vengono marcati con ✓. Tempo stimato di lettura: 60–80 minuti.
+  </div>
+
+  <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+    <button class="nav-btn primary" onclick="goTo(1)">Inizia a leggere →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 1 — INTRODUZIONE
+═══════════════════════════════ -->
+<div class="page" id="page-1">
+  <div class="chapter-label">Capitolo 1</div>
+  <h1 class="chapter-title">Introduzione: perché questo modulo</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile</strong> — valido indipendentemente dall'evoluzione degli strumenti tecnologici.
+  </div>
+
+  <p>L'Intelligenza Artificiale è già presente nella scuola: docenti che usano ChatGPT per preparare materiali, piattaforme con funzionalità adattive, alunni che si servono di IA per svolgere compiti. Questo non è un fenomeno futuro da attendere, ma una realtà quotidiana che richiede orientamento, non paura.</p>
+
+  <p>Questo modulo fornisce ai partecipanti — figure di sistema dell'istituto — la mappa concettuale e operativa per:</p>
+  <ul>
+    <li>orientarsi tra le categorie di strumenti IA rilevanti per la scuola;</li>
+    <li>distinguere livelli d'uso e criteri di scelta responsabile;</li>
+    <li>trasferire queste competenze ai colleghi con metodo e fondamento normativo.</li>
+  </ul>
+
+  <div class="callout callout-note">
+    <strong>Il fondamento normativo del corso</strong><br>
+    L'art. 4 del Regolamento UE 2024/1689 (AI Act), applicabile dal 2 febbraio 2025, obbliga deployer e provider di sistemi IA a garantire livelli adeguati di AI literacy al personale. <strong>La scuola che adotta strumenti IA è un deployer.</strong> Questo corso risponde direttamente a quell'obbligo.
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(0)" >← Copertina</button>
+    <span class="page-indicator">1 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(2)">Capitolo 2 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 2 — DEFINIZIONI
+═══════════════════════════════ -->
+<div class="page" id="page-2">
+  <div class="chapter-label">Capitolo 2</div>
+  <h1 class="chapter-title">Cos'è l'IA: definizioni operative</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile</strong> — le definizioni di base sono stabilizzate dalla normativa vigente.
+  </div>
+
+  <div class="callout callout-note">
+    <strong>Definizione operativa (AI Act, art. 3, par. 1)</strong><br>
+    <em>Sistema di IA</em>: un sistema automatizzato progettato per funzionare con vari livelli di autonomia che, per obiettivi espliciti o impliciti, <strong>inferisce dall'input</strong> che riceve come generare output quali previsioni, contenuti, raccomandazioni o decisioni che possono influenzare gli ambienti fisici o virtuali.
+  </div>
+
+  <p>Per la scuola è utile distinguere due famiglie di IA:</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th></th><th>IA generativa</th><th>IA discriminativa</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Cosa fa</strong></td><td>Genera nuovi contenuti (testo, immagini, audio) da un prompt</td><td>Classifica, predice, riconosce pattern in dati esistenti</td></tr>
+      <tr><td><strong>Esempi</strong></td><td>ChatGPT, Gemini, Copilot, Canva IA</td><td>Sistemi adattivi, filtri, riconoscimento vocale</td></tr>
+      <tr><td><strong>Uso educativo</strong></td><td>Generare materiali, feedback, bozze, domande</td><td>Adattare percorsi, rilevare difficoltà, raccomandare</td></tr>
+      <tr><td><strong>Rischio principale</strong></td><td>Allucinazioni, bias, dipendenza</td><td>Bias nei dati, opacità, privacy</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Nota sul funzionamento dei chatbot</strong><br>
+    I modelli LLM (Large Language Model) non «sanno» fatti: <strong>predicono statisticamente la parola più probabile</strong>. Questo spiega perché producono errori con la stessa fluidità con cui producono risposte corrette. Questa distinzione è fondamentale da trasferire ai colleghi.
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(1)">← Cap. 1</button>
+    <span class="page-indicator">2 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(3)">Capitolo 3 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 3 — QUADRO NORMATIVO
+═══════════════════════════════ -->
+<div class="page" id="page-3">
+  <div class="chapter-label">Capitolo 3</div>
+  <h1 class="chapter-title">Il quadro normativo</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile</strong> — verificare aggiornamenti normativi periodicamente; le fonti sono indicate nel capitolo 12.
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Fonte</th><th>Cosa stabilisce</th><th>Applicazione</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>AI Act, art. 4</strong><br><small>Reg. UE 2024/1689</small></td>
+        <td>Obbligo di AI literacy per deployer e provider: garantire competenze adeguate al personale che usa sistemi IA.</td>
+        <td>Dal 2 feb. 2025 (art. 113). Sanzioni dal 2 ago. 2025. Piena applicabilità: 2 ago. 2026.</td>
+      </tr>
+      <tr>
+        <td><strong>AI Act, art. 3 – Deployer</strong></td>
+        <td>La scuola che adotta strumenti IA nell'attività didattica o amministrativa è un deployer: ne riceve gli obblighi.</td>
+        <td>Già in vigore dal 1° agosto 2024.</td>
+      </tr>
+      <tr>
+        <td><strong>GDPR, Reg. UE 2016/679, art. 8</strong></td>
+        <td>Soglia per consenso al trattamento dati dei minori per servizi digitali: 16 anni (UE). In Italia: <strong>14 anni</strong> (art. 2-quinquies D.Lgs. 101/2018).</td>
+        <td>Già in vigore. Per minori &lt; 14 anni: consenso obbligatorio del genitore.</td>
+      </tr>
+      <tr>
+        <td><strong>D.M. 9 agosto 2025, n. 166</strong></td>
+        <td>Linee guida MIM per l'adozione dell'IA nelle scuole: criteri, cautele, governance, formazione.</td>
+        <td>Vigente dall'a.s. 2025/2026.</td>
+      </tr>
+      <tr>
+        <td><strong>D.M. 11 novembre 2025, n. 219</strong></td>
+        <td>Snodi formativi per la transizione digitale e l'IA nella scuola.</td>
+        <td>Vigente dall'a.s. 2025/2026.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Precisione operativa</strong><br>
+    La soglia per il consenso dati dei minori in Italia è <strong>14 anni</strong> (non 16). I termini d'uso commerciali degli strumenti IA (spesso fissati a 13 anni per ragioni COPPA/USA) non sostituiscono gli obblighi GDPR sull'istituto scolastico come titolare del trattamento.
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(2)">← Cap. 2</button>
+    <span class="page-indicator">3 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(4)">Capitolo 4 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 4 — STRUMENTI IA
+═══════════════════════════════ -->
+<div class="page" id="page-4">
+  <div class="chapter-label">Capitolo 4</div>
+  <h1 class="chapter-title">Strumenti IA per l'educazione</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Contenuto in aggiornamento</strong> — gli strumenti commerciali evolvono rapidamente. Questa sezione identifica <em>categorie e criteri stabili</em>; i nomi e le condizioni degli strumenti vanno verificati periodicamente.
+  </div>
+
+  <h2 class="section-h">4.1 Le sei categorie funzionali</h2>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Categoria</th><th>Funzione</th><th>Esempi attuali</th><th>Indicazione operativa</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>1. Chatbot e assistenti IA</strong></td><td>Generare testo, rispondere a domande, supportare la progettazione didattica</td><td>ChatGPT, Gemini, Copilot</td><td>Uso docente: immediato. Uso alunni: verificare età min., account, DPA.</td></tr>
+      <tr><td><strong>2. Generatori di contenuti</strong></td><td>Creare presentazioni, infografiche, riepiloghi da documenti caricati</td><td>Canva Education, NotebookLM</td><td>NotebookLM: solo uso docente (&gt; 18 anni de facto). Canva Edu: con DPA.</td></tr>
+      <tr><td><strong>3. Tutor intelligenti</strong></td><td>Guidare l'apprendimento passo a passo in modo dialogico</td><td>Khanmigo, Duolingo Max</td><td>Prevalentemente in inglese. Valutare accessibilità e contratto istituzionale.</td></tr>
+      <tr><td><strong>4. Strumenti adattivi</strong></td><td>Adattare percorso e difficoltà alle risposte dello studente</td><td>DreamBox, Century Tech</td><td>Richiedono contratto istituzionale e valutazione GDPR. Dati elaborati su cloud.</td></tr>
+      <tr><td><strong>5. Quiz e valutazione</strong></td><td>Generare domande, somministrare quiz, raccogliere dati sulle risposte</td><td>Quizizz, Kahoot!</td><td>Verificare DPA e trattamento dati alunni. Quizizz: DPA for Education disponibile.</td></tr>
+      <tr><td><strong>6. Accessibilità e BES</strong></td><td>Sintesi vocale, lettura immersiva, trascrizione, semplificazione</td><td>Immersive Reader, Speechify</td><td>Categoria ad alto impatto nel primo ciclo. Spesso usabile senza account alunni.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-h">4.2 Confronto operativo dei principali strumenti</h2>
+
+  <div class="callout callout-warn">
+    <strong>⚠</strong> Aggiornare questa tabella ogni anno scolastico verificando: età minima, DPA for Education, data protection officer del provider, eventuali nuovi strumenti adottati dall'istituto.
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Strumento</th><th>Categoria</th><th>Uso didattico consigliato</th><th>Dati inviati</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>ChatGPT</strong></td><td>Chatbot</td><td>Docente: preparare materiali, bozze, domande. <em>Non caricare dati alunni.</em></td><td>Testo, file</td></tr>
+      <tr><td><strong>Google Gemini</strong></td><td>Chatbot</td><td>Docente: integrato con Workspace Education. Mediato: possibile.</td><td>Testo, immagini</td></tr>
+      <tr><td><strong>Copilot M365</strong></td><td>Chatbot</td><td>Docente: integrato in Word, Teams, PowerPoint. Modalità sicura.</td><td>Dati M365</td></tr>
+      <tr><td><strong>NotebookLM</strong></td><td>Gen. contenuti</td><td>Solo docente: analisi fonti, riepiloghi da testi caricati.</td><td>Documenti</td></tr>
+      <tr><td><strong>Canva Education</strong></td><td>Gen. contenuti</td><td>Docente + alunni (con DPA e consenso): presentazioni, infografiche.</td><td>Account, creazioni</td></tr>
+      <tr><td><strong>Quizizz</strong></td><td>Quiz</td><td>Formativo: exit ticket, quiz, homework. Report per docente.</td><td>Risposte alunni</td></tr>
+      <tr><td><strong>Immersive Reader</strong></td><td>Accessibilità</td><td>Lettura immersiva, sintesi vocale, sillabazione. In M365.</td><td>Nessun dato extra</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(3)">← Cap. 3</button>
+    <span class="page-indicator">4 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(5)">Capitolo 5 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 5 — TRE LIVELLI
+═══════════════════════════════ -->
+<div class="page" id="page-5">
+  <div class="chapter-label">Capitolo 5</div>
+  <h1 class="chapter-title">I tre livelli d'uso nella scuola</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile</strong> — questa distinzione si applica a qualsiasi strumento IA, indipendentemente dall'evoluzione tecnologica.
+  </div>
+
+  <div class="level-grid">
+    <div class="level-card">
+      <div class="lc-num">Livello 1</div>
+      <div class="lc-title">Uso docente</div>
+      <p><strong>Chi:</strong> il docente usa l'IA nella propria attività professionale</p>
+      <p><strong>Come:</strong> ChatGPT per lezioni, NotebookLM per sintetizzare fonti, Quizizz per creare quiz</p>
+      <p><strong>Dati alunni:</strong> nessuno</p>
+      <p><strong>Nel I ciclo:</strong> sempre possibile</p>
+      <div class="lc-risk risk-low">🟢 Rischio privacy: basso</div>
+    </div>
+    <div class="level-card">
+      <div class="lc-num">Livello 2</div>
+      <div class="lc-title">Uso mediato</div>
+      <p><strong>Chi:</strong> il docente guida l'interazione mentre la classe osserva</p>
+      <p><strong>Come:</strong> IA proiettata alla classe; alunni propongono input; analisi critica collettiva degli output</p>
+      <p><strong>Dati alunni:</strong> nessuno</p>
+      <p><strong>Nel I ciclo:</strong> ideale – nessun account alunni, approccio critico</p>
+      <div class="lc-risk risk-med">🟡 Rischio privacy: molto basso</div>
+    </div>
+    <div class="level-card">
+      <div class="lc-num">Livello 3</div>
+      <div class="lc-title">Uso diretto</div>
+      <p><strong>Chi:</strong> l'alunno interagisce direttamente con lo strumento</p>
+      <p><strong>Come:</strong> account studenti o istituzionali; attività assegnata con obiettivo didattico</p>
+      <p><strong>Dati alunni:</strong> sì — risposte, progressi, dati account</p>
+      <p><strong>Nel I ciclo:</strong> raro; sempre con delibera DS, DPA, consenso</p>
+      <div class="lc-risk risk-high">🔴 Rischio privacy: significativo</div>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Per i chatbot generativi nel primo ciclo</strong><br>
+    Il Livello 3 con ChatGPT, Gemini o strumenti analoghi è <strong>quasi sempre inappropriato</strong> per gli alunni del primo ciclo. Preferire il Livello 2, che consente un approccio critico collettivo senza account alunni e senza invio di dati personali.
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(4)">← Cap. 4</button>
+    <span class="page-indicator">5 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(6)">Capitolo 6 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 6 — CRITERI
+═══════════════════════════════ -->
+<div class="page" id="page-6">
+  <div class="chapter-label">Capitolo 6</div>
+  <h1 class="chapter-title">Criteri di scelta responsabile</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile</strong> — questi criteri si applicano a qualsiasi strumento, presente e futuro.
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>#</th><th>Criterio</th><th>Domanda operativa</th><th>Indicazione pratica</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Funzione</strong></td><td>Cosa fa? È pertinente all'obiettivo didattico?</td><td>Partire dal bisogno, non dall'entusiasmo per lo strumento.</td></tr>
+      <tr><td>2</td><td><strong>Destinatari</strong></td><td>Chi userà lo strumento? Docente, mediato o diretto con alunni?</td><td>Determinare il livello d'uso prima di valutare qualsiasi altra condizione.</td></tr>
+      <tr><td>3</td><td><strong>Dati trattati</strong></td><td>Quali dati vengono inviati? Dove vengono elaborati?</td><td>Non caricare mai dati sensibili (salute, disabilità, famiglia) su piattaforme esterne.</td></tr>
+      <tr><td>4</td><td><strong>Privacy/GDPR</strong></td><td>C'è un DPA? Server in UE o SCCs? Età minima rispettata?</td><td>In Italia: &lt; 14 anni → consenso genitoriale obbligatorio (art. 2-quinquies).</td></tr>
+      <tr><td>5</td><td><strong>Limiti e rischi</strong></td><td>Allucinazioni? Bias? Copyright? Dipendenza cognitiva?</td><td>Ogni output va verificato prima dell'uso didattico. Mai delegare senza controllo.</td></tr>
+      <tr><td>6</td><td><strong>Controllo umano</strong></td><td>Il docente mantiene il controllo sugli output?</td><td>Regola fondamentale: nessun output IA entra in classe senza revisione umana.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(5)">← Cap. 5</button>
+    <span class="page-indicator">6 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(7)">Capitolo 7 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 7 — BIAS E ALLUCINAZIONI
+═══════════════════════════════ -->
+<div class="page" id="page-7">
+  <div class="chapter-label">Capitolo 7</div>
+  <h1 class="chapter-title">Limiti fondamentali: bias e allucinazioni</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile</strong> — questi limiti strutturali si applicano a tutti i modelli LLM attuali.
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Bias algoritmici</th><th>Allucinazioni</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Cos'è:</strong> l'IA riproduce pregiudizi (di genere, culturali, geografici) presenti nei dati di addestramento.</td>
+        <td><strong>Cos'è:</strong> l'IA produce informazioni false presentandole con la stessa sicurezza di quelle vere.</td>
+      </tr>
+      <tr>
+        <td><strong>Esempio:</strong> chiedere all'IA di descrivere «un buon dirigente» produce spesso stereotipi di genere o etnia.</td>
+        <td><strong>Esempio:</strong> chiedere 5 articoli scientifici sul cooperative learning restituisce spesso riferimenti inesistenti.</td>
+      </tr>
+      <tr>
+        <td><strong>Come spiegarlo ai colleghi:</strong> far produrre all'IA descrizioni di ruoli e analizzare insieme i risultati. Esercizio potente e memorabile.</td>
+        <td><strong>Come spiegarlo ai colleghi:</strong> verificare su Google Scholar i riferimenti citati dall'IA. Quasi sempre qualcuno è inventato.</td>
+      </tr>
+      <tr>
+        <td><strong>Impatto didattico:</strong> materiali con bias rinforzano stereotipi negli alunni. Il docente deve rileggere criticamente ogni output.</td>
+        <td><strong>Impatto didattico:</strong> un docente che usa output IA senza verifica rischia di trasmettere fatti falsi.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-h">Altri limiti rilevanti</h2>
+  <ul>
+    <li><strong>Copyright:</strong> gli output IA possono replicare testi protetti, anche senza che l'utente se ne accorga.</li>
+    <li><strong>Obsolescenza:</strong> i modelli hanno un cut-off temporale; le informazioni successive non sono disponibili.</li>
+    <li><strong>Dipendenza cognitiva:</strong> un uso acritico e sistematico riduce la capacità di elaborazione autonoma negli alunni.</li>
+  </ul>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(6)">← Cap. 6</button>
+    <span class="page-indicator">7 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(8)">Capitolo 8 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 8 — GOVERNANCE
+═══════════════════════════════ -->
+<div class="page" id="page-8">
+  <div class="chapter-label">Capitolo 8</div>
+  <h1 class="chapter-title">Procedure di istituto: governance e accountability</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile per la struttura</strong> — le policy specifiche vanno deliberate e aggiornate dall'istituto.
+  </div>
+
+  <p>L'uso dell'IA nella scuola non è una decisione del singolo docente: è una scelta organizzativa che richiede processi di governance chiari. Il formatore interno deve conoscere questi processi e aiutare i colleghi a muoversi dentro di essi.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Chi</th><th>Ruolo rispetto all'IA</th><th>Azione richiesta</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Dirigente scolastico</strong></td>
+        <td>Titolare del trattamento dati (GDPR). Autorizza formalmente l'adozione di strumenti IA per uso istituzionale.</td>
+        <td>Delibera o autorizzazione scritta per ogni strumento con dati alunni. Non basta la decisione del singolo docente.</td>
+      </tr>
+      <tr>
+        <td><strong>DPO</strong></td>
+        <td>Consulente obbligatorio per istituti che trattano dati in modo sistematico. Verifica conformità GDPR.</td>
+        <td>Coinvolgerlo PRIMA di adottare strumenti con dati alunni. Richiedere parere scritto su DPA e age compliance.</td>
+      </tr>
+      <tr>
+        <td><strong>Animatore digitale</strong></td>
+        <td>Referente tecnico e formativo sull'innovazione digitale. Spesso coincide con il formatore interno per l'IA.</td>
+        <td>Proporre e aggiornare la policy IA d'istituto. Mantenere aggiornata la lista degli strumenti autorizzati.</td>
+      </tr>
+      <tr>
+        <td><strong>Docente</strong></td>
+        <td>Usa strumenti IA nella propria attività professionale e didattica.</td>
+        <td>Per uso personale (Livello 1): autonomia. Per uso con alunni: rispettare policy, richiedere autorizzazione DS se necessario.</td>
+      </tr>
+      <tr>
+        <td><strong>Famiglia</strong></td>
+        <td>Titolare del consenso per i dati dei figli minorenni &lt; 14 anni.</td>
+        <td>Informare le famiglie tramite informativa aggiornata e PTOF. Il Patto di corresponsabilità può includere indicazioni sull'IA.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="checklist">
+    <div class="checklist-title">☑ Checklist minima di governance per l'adozione di uno strumento IA con dati alunni</div>
+    <div class="check-item"><input type="checkbox" id="c1"><label for="c1">Lo strumento è presente nella lista degli strumenti autorizzati dall'istituto?</label></div>
+    <div class="check-item"><input type="checkbox" id="c2"><label for="c2">Il DPO è stato consultato?</label></div>
+    <div class="check-item"><input type="checkbox" id="c3"><label for="c3">Esiste un DPA firmato con il provider?</label></div>
+    <div class="check-item"><input type="checkbox" id="c4"><label for="c4">L'età minima è rispettata per tutti gli alunni coinvolti?</label></div>
+    <div class="check-item"><input type="checkbox" id="c5"><label for="c5">Le famiglie sono state informate?</label></div>
+    <div class="check-item"><input type="checkbox" id="c6"><label for="c6">Il docente ha ricevuto formazione sull'uso responsabile?</label></div>
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(7)">← Cap. 7</button>
+    <span class="page-indicator">8 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(9)">Capitolo 9 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 9 — CASI D'USO
+═══════════════════════════════ -->
+<div class="page" id="page-9">
+  <div class="chapter-label">Capitolo 9</div>
+  <h1 class="chapter-title">Casi d'uso per ordine scolastico</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Esempi concreti e aggiornabili</strong> — verificare che gli strumenti citati siano ancora attivi e conformi alle condizioni dell'istituto.
+  </div>
+  <p>I tre casi seguenti mostrano come le distinzioni tra livelli d'uso, criteri e governance si traducono in pratiche realistiche nei diversi ordini del primo ciclo.</p>
+
+  <div class="case-box">
+    <div class="case-box-hdr">CASO D'USO 1 — Scuola dell'infanzia</div>
+    <div class="case-box-body">
+      <div class="tag">Livello 1 – Uso docente</div>
+      <p><strong>Contesto:</strong> Una docente vuole differenziare i materiali narrativi per un gruppo con bambini di lingua madre diversa.</p>
+      <p><strong>Cosa fa:</strong> usa ChatGPT con il proprio account per generare 3 versioni della stessa storia con lessico semplificato (vocabolario di base, frasi brevi, parole-chiave visive). Rivede criticamente gli output, corregge eventuali bias culturali, adatta le storie al contesto della classe. Nessun alunno interagisce con l'IA.</p>
+      <p><strong>Strumenti:</strong> ChatGPT (uso docente, account personale). Eventualmente Immersive Reader per la lettura ai bambini con difficoltà.</p>
+      <div class="tag tag-ok">✓ Nessun dato alunno inviato — controllo umano totale — nessun account minore</div>
+    </div>
+  </div>
+
+  <div class="case-box">
+    <div class="case-box-hdr">CASO D'USO 2 — Scuola primaria (classe IV–V)</div>
+    <div class="case-box-body">
+      <div class="tag">Livello 2 – Uso mediato</div>
+      <p><strong>Contesto:</strong> Un docente vuole avviare una discussione sull'attendibilità delle fonti durante un'unità di educazione civica.</p>
+      <p><strong>Cosa fa:</strong> proietta ChatGPT alla classe e chiede agli alunni di suggerire domande da porre. Il docente digita le domande e mostra gli output. La classe analizza collettivamente: «Queste informazioni sono verificabili? Dove potremmo controllare?» Si individuano insieme un'allucinazione e un bias nella descrizione di un personaggio storico.</p>
+      <p><strong>Strumenti:</strong> ChatGPT (account docente, LIM o proiettore). Nessun account alunno.</p>
+      <div class="tag tag-ok">✓ Nessun dato alunno inviato — approccio critico — obiettivo curricolare documentato nell'UdA</div>
+    </div>
+  </div>
+
+  <div class="case-box">
+    <div class="case-box-hdr">CASO D'USO 3 — Secondaria di I grado (classe II–III)</div>
+    <div class="case-box-body">
+      <div class="tag">Livello 3 – Uso diretto (con condizioni)</div>
+      <p><strong>Contesto:</strong> Un docente di matematica vuole usare Quizizz per exit ticket formativi nelle ultime settimane dell'anno.</p>
+      <p><strong>Cosa fa:</strong> prepara i quiz con il proprio account Quizizz. Verifica che l'istituto abbia sottoscritto il DPA Quizizz for Education e che gli alunni abbiano almeno 13 anni. Il DS autorizza l'uso, il DPO conferma la conformità. Gli alunni accedono tramite un codice di sessione (senza creare account personali). I report vengono usati solo dal docente per adattare la didattica.</p>
+      <p><strong>Strumenti:</strong> Quizizz (DPA for Education firmato, modalità senza account studente: accesso via codice).</p>
+      <div class="tag tag-ok">✓ DPA firmato — età minima verificata — autorizzazione DS — accesso senza account personali minori</div>
+    </div>
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(8)">← Cap. 8</button>
+    <span class="page-indicator">9 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(10)">Capitolo 10 →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 10 — FORMATORE INTERNO
+═══════════════════════════════ -->
+<div class="page" id="page-10">
+  <div class="chapter-label">Capitolo 10</div>
+  <h1 class="chapter-title">Il formatore interno: strategie di trasferimento</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="callout callout-stable">
+    <strong>📌 Contenuto stabile</strong> — le strategie di comunicazione e formazione hanno validità generale.
+  </div>
+
+  <p>Il formatore interno non è un tecnico IA né un sostituto della formazione professionale. È un professionista dell'educazione che orienta, previene errori e sostiene un'adozione graduale e consapevole.</p>
+
+  <div class="strategy-list">
+    <div class="strategy-item">
+      <div class="strategy-num">1</div>
+      <div class="strategy-content">
+        <div class="st-title">Parti dai bisogni reali</div>
+        <p>Chiedi: «Che problema vuoi risolvere?» La rilevanza personale è il motore dell'apprendimento. Mostrare uno strumento su un problema concreto del collega è più efficace di qualsiasi presentazione astratta.</p>
+      </div>
+    </div>
+    <div class="strategy-item">
+      <div class="strategy-num">2</div>
+      <div class="strategy-content">
+        <div class="st-title">Mostra, non descrivere</div>
+        <p>Una demo live di 5 minuti vale più di 30 minuti di spiegazione. Includi sempre un errore dell'IA: mostrare un'allucinazione dal vivo è il modo più efficace per creare consapevolezza.</p>
+      </div>
+    </div>
+    <div class="strategy-item">
+      <div class="strategy-num">3</div>
+      <div class="strategy-content">
+        <div class="st-title">Usa la mappa comparativa</div>
+        <p>La mappa costruita nel laboratorio è il tuo principale alleato: visiva, rapida, aggiornabile. Un colpo d'occhio vale più di qualsiasi spiegazione verbale.</p>
+      </div>
+    </div>
+    <div class="strategy-item">
+      <div class="strategy-num">4</div>
+      <div class="strategy-content">
+        <div class="st-title">Anticipa le domande difficili</div>
+        <p>«È legale? E la privacy? I miei alunni possono usarla?» Prepara risposte brevi, fondate su fonti: AI Act art. 4, GDPR art. 8, D.M. 166/2025, policy d'istituto.</p>
+      </div>
+    </div>
+    <div class="strategy-item">
+      <div class="strategy-num">5</div>
+      <div class="strategy-content">
+        <div class="st-title">Normalizza il dubbio</div>
+        <p>Non devi sapere tutto. «Non lo so con certezza, verifico e ti rispondo» costruisce più fiducia della perfezione. L'expert è chi sa come trovare le risposte, non chi le ha già tutte.</p>
+      </div>
+    </div>
+    <div class="strategy-item">
+      <div class="strategy-num">6</div>
+      <div class="strategy-content">
+        <div class="st-title">Gestisci le resistenze</div>
+        <p>Le preoccupazioni dei colleghi (privacy, sostituzione, etica) sono spesso legittime. Ascolta prima di rispondere. Non forzare: il tuo ruolo è informare, non convincere.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-h">Il riferimento internazionale: UNESCO AI Competency Framework for Teachers</h2>
+
+  <p>Le competenze sviluppate in questo corso si allineano al framework UNESCO (2024), il riferimento internazionale per la formazione dei docenti sull'IA.</p>
+
+  <table class="data-table teal-header">
+    <thead>
+      <tr><th>Dimensione UNESCO</th><th>Cosa comprende</th><th>Nel corso</th></tr>
+    </thead>
+    <tbody class="unesco-row">
+      <tr><td>1. Human-centred mindset</td><td>L'IA al servizio della persona: centralità della relazione educativa e del giudizio umano</td><td>M1, M3, M4</td></tr>
+      <tr><td>2. Ethics of AI</td><td>Etica, equità, privacy, trasparenza, responsabilità nell'uso dei sistemi IA</td><td>M1, M4</td></tr>
+      <tr><td>3. AI foundations and applications</td><td>Comprensione di base del funzionamento dei sistemi IA e delle loro applicazioni</td><td><strong>M1 (questo modulo)</strong></td></tr>
+      <tr><td>4. AI pedagogy</td><td>Integrazione didattica dell'IA: progettazione, valutazione, personalizzazione</td><td>M2, M3</td></tr>
+      <tr><td>5. AI for professional development</td><td>Uso dell'IA per la crescita professionale propria e dei colleghi</td><td>M5, M6</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(9)">← Cap. 9</button>
+    <span class="page-indicator">10 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(11)">Glossario →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 11 — GLOSSARIO
+═══════════════════════════════ -->
+<div class="page" id="page-11">
+  <div class="chapter-label">Appendice G</div>
+  <h1 class="chapter-title">Glossario essenziale</h1>
+  <div class="chapter-divider"></div>
+
+  <div class="gloss-grid">
+    <div class="gloss-item"><div class="gloss-term">AI Act</div><div class="gloss-def">Reg. UE 2024/1689: primo quadro normativo vincolante sull'IA al mondo. AI literacy obbligatoria dal 2 feb. 2025.</div></div>
+    <div class="gloss-item"><div class="gloss-term">AI literacy</div><div class="gloss-def">Capacità di comprendere, valutare criticamente e usare consapevolmente sistemi IA (art. 4 AI Act).</div></div>
+    <div class="gloss-item"><div class="gloss-term">Allucinazione</div><div class="gloss-def">Output IA che contiene informazioni false, presentate con la stessa sicurezza di quelle vere.</div></div>
+    <div class="gloss-item"><div class="gloss-term">Bias algoritmico</div><div class="gloss-def">Distorsione sistematica negli output IA che riflette pregiudizi nei dati di addestramento.</div></div>
+    <div class="gloss-item"><div class="gloss-term">Chatbot</div><div class="gloss-def">Software che simula una conversazione testuale, basato su LLM.</div></div>
+    <div class="gloss-item"><div class="gloss-term">Deployer</div><div class="gloss-def">Soggetto (anche istituzione scolastica) che usa un sistema IA sotto la propria responsabilità (art. 3 AI Act).</div></div>
+    <div class="gloss-item"><div class="gloss-term">DPA</div><div class="gloss-def">Data Processing Agreement: accordo tra titolare e responsabile del trattamento dei dati.</div></div>
+    <div class="gloss-item"><div class="gloss-term">DPO</div><div class="gloss-def">Data Protection Officer: responsabile della protezione dei dati. Figura obbligatoria per molte scuole.</div></div>
+    <div class="gloss-item"><div class="gloss-term">GDPR</div><div class="gloss-def">Reg. UE 2016/679 sulla protezione dei dati personali. In Italia: consenso digitale dei minori a 14 anni.</div></div>
+    <div class="gloss-item"><div class="gloss-term">IA generativa</div><div class="gloss-def">IA capace di generare nuovi contenuti (testo, immagini, audio) da un prompt.</div></div>
+    <div class="gloss-item"><div class="gloss-term">LLM</div><div class="gloss-def">Large Language Model: modello di linguaggio alla base dei chatbot IA. Predice parole, non «sa» fatti.</div></div>
+    <div class="gloss-item"><div class="gloss-term">Prompt</div><div class="gloss-def">Input fornito dall'utente a un sistema IA generativo per ottenere un output.</div></div>
+    <div class="gloss-item"><div class="gloss-term">SCCs</div><div class="gloss-def">Standard Contractual Clauses: garanzie per trasferimento dati fuori UE (es. provider USA).</div></div>
+    <div class="gloss-item"><div class="gloss-term">Train the Trainers</div><div class="gloss-def">Modello formativo in cui i partecipanti vengono formati per formare a loro volta altri destinatari.</div></div>
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(10)">← Cap. 10</button>
+    <span class="page-indicator">11 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(12)">Riferimenti →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 12 — RIFERIMENTI
+═══════════════════════════════ -->
+<div class="page" id="page-12">
+  <div class="chapter-label">Appendice R</div>
+  <h1 class="chapter-title">Riferimenti normativi e bibliografici</h1>
+  <div class="chapter-divider"></div>
+
+  <h2 class="section-h">Fonti normative verificate</h2>
+  <div class="ref-item">Parlamento europeo e Consiglio UE (2024). <em>Regolamento (UE) 2024/1689 – AI Act.</em> GU UE, 12 luglio 2024. Art. 4 applicabile dal 2 febbraio 2025 (art. 113). <a href="https://eur-lex.europa.eu/legal-content/IT/TXT/?uri=CELEX:32024R1689" target="_blank">eur-lex.europa.eu</a></div>
+  <div class="ref-item">Parlamento europeo e Consiglio UE (2016). <em>Regolamento (UE) 2016/679 – GDPR.</em> GU UE, 4 maggio 2016. In Italia: soglia consenso minori = 14 anni (art. 2-quinquies D.Lgs. 101/2018).</div>
+  <div class="ref-item">Ministero dell'Istruzione e del Merito (2025). <em>D.M. 9 agosto 2025, n. 166 – Linee guida per l'introduzione dell'IA nelle istituzioni scolastiche.</em></div>
+  <div class="ref-item">Ministero dell'Istruzione e del Merito (2025). <em>D.M. 11 novembre 2025, n. 219 – Snodi formativi per la transizione digitale.</em></div>
+  <div class="ref-item">Ministero dell'Istruzione e del Merito (2025). <em>D.M. 9 dicembre 2025, n. 221 – Indicazioni nazionali per la scuola dell'infanzia e il primo ciclo.</em></div>
+  <div class="ref-item">Garante per la protezione dei dati personali (2023). <em>La scuola a prova di privacy. Vademecum.</em> <a href="https://www.garanteprivacy.it" target="_blank">garanteprivacy.it</a></div>
+  <div class="ref-item">Commissione europea (2025). <em>AI Literacy – Questions &amp; Answers.</em> <a href="https://digital-strategy.ec.europa.eu/en/faqs/ai-literacy-questions-answers" target="_blank">digital-strategy.ec.europa.eu</a></div>
+
+  <h2 class="section-h">Framework e documenti internazionali</h2>
+  <div class="ref-item">UNESCO (2024). <em>AI competency framework for teachers.</em> UNESCO.</div>
+  <div class="ref-item">UNESCO (2023). <em>Guidance for generative AI in education and research.</em> UNESCO.</div>
+  <div class="ref-item">Commissione europea (2022). <em>Ethical guidelines on the use of AI and data in teaching and learning for educators.</em> Publications Office of the EU.</div>
+  <div class="ref-item">Redecker, C. (2017). <em>European Framework for the Digital Competence of Educators: DigCompEdu.</em> Publications Office of the EU.</div>
+  <div class="ref-item">Vuorikari, R., Kluzer, S., &amp; Punie, Y. (2022). <em>DigComp 2.2.</em> Publications Office of the EU.</div>
+  <div class="ref-item">UNICEF (2025). <em>Guidance on AI and children.</em> UNICEF.</div>
+
+  <div class="callout callout-note" style="margin-top:2rem;">
+    <strong>Fine del Modulo 1</strong><br>
+    Hai completato la lettura di tutti i capitoli. Procedi al <strong>quiz di verifica</strong> (disponibile in Google Classroom come materiale separato) e compila la <strong>Scheda laboratorio M1</strong> prima dell'Incontro 2.
+  </div>
+
+  <div class="page-nav">
+    <button class="nav-btn" onclick="goTo(11)">← Glossario</button>
+    <span class="page-indicator">12 di 12</span>
+    <button class="nav-btn primary" onclick="goTo(0)">↑ Torna alla copertina</button>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+const TOTAL = 13;
+const visited = new Set([0]);
+let current = 0;
+
+function goTo(n) {
+  document.getElementById('page-' + current).classList.remove('active');
+  document.querySelector('[data-page="' + current + '"]').classList.remove('active');
+
+  current = n;
+  visited.add(n);
+
+  document.getElementById('page-' + current).classList.add('active');
+  const navEl = document.querySelector('[data-page="' + current + '"]');
+  if (navEl) {
+    navEl.classList.add('active');
+    navEl.classList.add('visited');
+    navEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // mark all visited
+  visited.forEach(v => {
+    const el = document.querySelector('[data-page="' + v + '"]');
+    if (el) el.classList.add('visited');
+  });
+
+  // progress
+  const pct = Math.round((visited.size / TOTAL) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  const label = current === 0 ? 'Copertina' : (current <= 10 ? current + ' / 10' : (current === 11 ? 'Glossario' : 'Riferimenti'));
+  document.getElementById('prog-text').textContent = label;
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // close sidebar on mobile
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').style.display = 'none';
+  }
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('overlay');
+  const open = sb.classList.toggle('open');
+  ov.style.display = open ? 'block' : 'none';
+}
+
+// keyboard nav
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' && current < TOTAL - 1) goTo(current + 1);
+  if (e.key === 'ArrowLeft' && current > 0) goTo(current - 1);
+});
+</script>
+</body>
+</html>

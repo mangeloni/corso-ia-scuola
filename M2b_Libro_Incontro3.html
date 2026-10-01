@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modulo 2 · Parte 2 — Progettazione didattica con IA e prompting strutturato</title>
+<style>
+:root {
+  --navy:  #1A3560;
+  --teal:  #0D7C8F;
+  --amber: #E8820C;
+  --white: #FFFFFF;
+  --light: #F7F9FC;
+  --grey:  #6B7280;
+  --dark:  #1F2937;
+  --sidebar-w: 268px;
+  --radius: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--dark); }
+#app { display: flex; height: 100vh; }
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--navy); color: var(--white);
+  display: flex; flex-direction: column;
+  overflow: hidden; transition: transform .3s ease; z-index: 100;
+}
+#sidebar-header {
+  padding: 18px 16px 12px;
+  background: color-mix(in srgb, var(--navy) 80%, black);
+  border-bottom: 2px solid var(--teal);
+}
+#sidebar-header .mod-badge {
+  font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 4px;
+}
+#sidebar-header .mod-title { font-size: .78rem; font-weight: 600; line-height: 1.4; color: #CBD5E1; }
+#nav-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+#nav-list::-webkit-scrollbar { width: 4px; }
+#nav-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+.nav-item {
+  padding: 9px 16px; font-size: .78rem; cursor: pointer;
+  border-left: 3px solid transparent; color: #94A3B8;
+  transition: all .15s; line-height: 1.35;
+}
+.nav-item:hover { background: rgba(255,255,255,.06); color: #E2E8F0; }
+.nav-item.active { border-left-color: var(--teal); background: rgba(255,255,255,.1); color: var(--white); font-weight: 600; }
+.nav-item.visited { color: #CBD5E1; }
+#progress-area { padding: 12px 16px; border-top: 1px solid #334155; }
+#progress-area .prog-label { font-size: .68rem; color: #94A3B8; margin-bottom: 5px; }
+#prog-bar { height: 5px; background: #334155; border-radius: 99px; overflow: hidden; }
+#prog-fill { height: 100%; background: var(--teal); width: 0%; transition: width .4s ease; border-radius: 99px; }
+#content-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
+.page { display: none; min-height: 100%; }
+.page.active { display: flex; flex-direction: column; }
+.cover-page {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center; padding: 40px 24px;
+  background: linear-gradient(135deg, var(--cover-color, #0D7C8F) 0%, color-mix(in srgb, var(--cover-color, #0D7C8F) 60%, black) 100%);
+  color: var(--white); min-height: 100%;
+}
+.cover-badge { background: rgba(255,255,255,.2); border-radius: 99px; padding: 5px 18px; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 20px; }
+.cover-title { font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 800; line-height: 1.25; max-width: 600px; margin-bottom: 18px; }
+.cover-sub { font-size: .88rem; color: rgba(255,255,255,.8); margin-bottom: 6px; }
+.cover-hint { margin-top: 40px; font-size: .75rem; color: rgba(255,255,255,.5); }
+.page-header {
+  background: var(--white); border-bottom: 2px solid var(--teal);
+  padding: 20px 36px 16px; display: flex; align-items: baseline; gap: 14px;
+  position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.chapter-num {
+  background: var(--teal); color: var(--white);
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 700; flex-shrink: 0;
+}
+.page-header h2 { font-size: clamp(.95rem, 2vw, 1.25rem); font-weight: 700; color: var(--navy); line-height: 1.3; }
+.page-body { padding: 28px 36px 32px; flex: 1; max-width: 820px; }
+.page-body p { font-family: Georgia, 'Times New Roman', serif; font-size: .97rem; line-height: 1.75; color: #374151; margin-bottom: 14px; }
+.libro-h3 { font-size: 1.05rem; font-weight: 700; color: var(--teal); margin: 24px 0 10px; padding-left: 10px; border-left: 3px solid var(--teal); }
+.libro-h4 { font-size: .95rem; font-weight: 700; color: var(--navy); margin: 18px 0 8px; }
+.libro-list { margin: 10px 0 14px 20px; }
+.libro-list li { font-family: Georgia, serif; font-size: .95rem; line-height: 1.7; color: #374151; margin-bottom: 6px; }
+.libro-table { width: 100%; border-collapse: collapse; margin: 16px 0 20px; font-size: .87rem; border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.libro-table th { background: var(--navy); color: var(--white); padding: 10px 14px; text-align: left; font-weight: 600; }
+.libro-table td { padding: 9px 14px; border-bottom: 1px solid #E5E7EB; vertical-align: top; line-height: 1.55; }
+.libro-table tr:nth-child(even) td { background: var(--light); }
+.libro-table tr:last-child td { border-bottom: none; }
+.libro-callout { background: #FFF8ED; border-left: 4px solid var(--amber); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 14px 0; font-size: .9rem; line-height: 1.65; color: #374151; font-family: Georgia, serif; }
+#footer-nav {
+  background: var(--white); border-top: 1px solid #E5E7EB;
+  padding: 12px 36px; display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; box-shadow: 0 -1px 4px rgba(0,0,0,.04);
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 6px; padding: 8px 18px;
+  background: var(--teal); color: var(--white); border: none; border-radius: 6px;
+  cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .15s;
+}
+.nav-btn:hover { opacity: .85; }
+.nav-btn:disabled { background: #D1D5DB; cursor: default; }
+#page-counter { font-size: .78rem; color: var(--grey); }
+#burger-btn {
+  display: none; position: fixed; top: 12px; left: 12px; z-index: 200;
+  background: var(--navy); color: var(--white); border: none; border-radius: 6px;
+  width: 38px; height: 38px; cursor: pointer; font-size: 1.1rem;
+}
+#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 90; }
+@media (max-width: 680px) {
+  #burger-btn { display: flex; align-items: center; justify-content: center; }
+  #sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); }
+  #sidebar.open { transform: translateX(0); }
+  #overlay.open { display: block; }
+  #content-area { width: 100%; }
+  .page-body { padding: 16px 18px 24px; }
+  .page-header { padding: 14px 18px 12px; }
+  #footer-nav { padding: 10px 18px; }
+  .nav-btn { padding: 7px 14px; }
+}
+</style>
+</head>
+<body>
+<button id="burger-btn" aria-label="Apri menu">&#9776;</button>
+<div id="overlay"></div>
+<div id="app">
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div class="mod-badge">Modulo 2 · Parte 2 · 3 ore</div>
+      <div class="mod-title">Progettazione didattica con IA e prompting strutturato</div>
+    </div>
+    <div id="nav-list">
+<div class="nav-item active" data-page="0" onclick="goTo(0)">Copertina</div>
+<div class="nav-item" data-page="1" onclick="goTo(1)">7. Verificare e revisionare gli output</div>
+<div class="nav-item" data-page="2" onclick="goTo(2)">8. Privacy nel prompting: cosa non scrivere mai in un p…</div>
+<div class="nav-item" data-page="3" onclick="goTo(3)">9. Il formatore interno: trasferire il prompting ai col…</div>
+<div class="nav-item" data-page="4" onclick="goTo(4)">10. Esempi pronti all'uso (prompt templates)</div>
+<div class="nav-item" data-page="5" onclick="goTo(5)">11. Glossario essenziale</div>
+<div class="nav-item" data-page="6" onclick="goTo(6)">12. Riferimenti</div>
+    </div>
+    <div id="progress-area">
+      <div class="prog-label">Progresso: <span id="prog-pct">0%</span></div>
+      <div id="prog-bar"><div id="prog-fill"></div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+    <div id="content-area">
+
+<div class="page active" id="page-0">
+  <div class="cover-page" style="--cover-color:#0D7C8F">
+    <div class="cover-badge">Modulo 2 · Parte 2</div>
+    <h1 class="cover-title">Progettazione didattica con IA e prompting strutturato</h1>
+    <p class="cover-sub">Libro del partecipante &nbsp;·&nbsp; 3 ore</p>
+    <p class="cover-sub">Corso: Formare i formatori sull'IA nella scuola &nbsp;·&nbsp; Incontro 3</p>
+    <p class="cover-hint">Usa le frecce ← → o i pulsanti per navigare</p>
+  </div>
+</div>
+<div class="page" id="page-1">
+  <div class="page-header">
+    <span class="chapter-num">7</span>
+    <h2>7. Verificare e revisionare gli output</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – la revisione critica dell'output è una competenza professionale indipendente dalla piattaforma</td></tr></table><table class="libro-table"><tr><td>⚠ Regola fondamentale: nessun output IA entra in classe senza revisione umana. Il docente è sempre responsabile di ciò che porta agli alunni.</td></tr></table><table class="libro-table"><tr><th></th><th>Criterio</th><th>Domanda di revisione</th></tr><tr><td>☐</td><td>Correttezza</td><td>I contenuti disciplinari sono corretti? Ci sono informazioni false o approssimative?</td></tr><tr><td>☐</td><td>Adeguatezza</td><td>Il linguaggio è adatto al livello e all'età dei destinatari?</td></tr><tr><td>☐</td><td>Bias</td><td>Ci sono stereotipi di genere, culturali o sociali nell'output?</td></tr><tr><td>☐</td><td>Fonti</td><td>Se cita dati, statistiche o autori: sono verificabili? Esistono davvero?</td></tr><tr><td>☐</td><td>Formato</td><td>La struttura è usabile com'è o va rielaborata?</td></tr><tr><td>☐</td><td>Coerenza</td><td>L'output risponde a quanto richiesto nel prompt? Manca qualcosa?</td></tr><tr><td>☐</td><td>Privacy</td><td>Contiene riferimenti a persone reali identificabili o dati alunni?</td></tr><tr><td>☐</td><td>Curricolo</td><td>Il contenuto è coerente con le Indicazioni Nazionali e il progetto del docente?</td></tr></table><h3 class="libro-h3">Errori comuni da prevenire</h3><ul class="libro-list"><li>Copia-incolla acritico: l'output non è mai pronto per l'uso diretto senza revisione.</li><li>Delegare la valutazione: l'IA può supportare la valutazione formativa, ma il giudizio finale è sempre del docente.</li><li>Ignorare le allucinazioni: verificare sempre i dati, le date, le citazioni e le fonti citate dall'IA.</li><li>Prompt senza vincoli di livello: un output scritto per un pubblico adulto non è mai adatto a bambini senza adattamento.</li></ul>
+  </div>
+</div>
+<div class="page" id="page-2">
+  <div class="page-header">
+    <span class="chapter-num">8</span>
+    <h2>8. Privacy nel prompting: cosa non scrivere mai in un prompt</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – regole valide per qualsiasi strumento IA, presente e futuro</td></tr></table><p>Ogni testo digitato in un chatbot viene inviato ai server del provider e può essere conservato, analizzato o usato per addestrare i modelli. Il prompt è quindi a tutti gli effetti una comunicazione di dati a terzi. Questa consapevolezza deve diventare un automatismo professionale, prima ancora delle tecniche di prompting.</p><table class="libro-table"><tr><th>Categoria di dati</th><th>Esempi da NON inserire mai</th><th>Alternativa corretta</th></tr><tr><td>Dati identificativi degli alunni</td><td>Nome e cognome, classe + scuola, codice fiscale, foto</td><td>Usare ruoli generici: «un alunno di classe III», «una bambina di 8 anni»</td></tr><tr><td>Dati sensibili (art. 9 GDPR)</td><td>Diagnosi DSA/BES con nome, certificazioni, dati sanitari, religione, situazione familiare</td><td>Descrivere il bisogno senza identificare: «un alunno con dislessia certificata»</td></tr><tr><td>Produzioni degli alunni</td><td>Temi, verifiche o elaborati con nome o elementi identificativi</td><td>Anonimizzare prima del caricamento: rimuovere nome, classe, riferimenti personali</td></tr><tr><td>Dati di colleghi e famiglie</td><td>Nomi di docenti in situazioni valutative, comunicazioni private, verbali con nomi</td><td>Ruoli generici: «un collega del team», «una famiglia della classe»</td></tr><tr><td>Documenti interni riservati</td><td>PEI, PDP, verbali GLO, relazioni dei servizi sociali, dati di scrutinio</td><td>Mai caricarli su piattaforme esterne, neppure parzialmente anonimizzati</td></tr></table><table class="libro-table"><tr><td>⚠ Il principio di minimizzazione (art. 5 GDPR) si applica anche ai prompt: inserire solo le informazioni strettamente necessarie a ottenere l'output desiderato. Un prompt didattico efficace non ha quasi mai bisogno di dati personali reali: il contesto pedagogico si descrive con ruoli e caratteristiche generiche.</td></tr></table><h3 class="libro-h3">La regola pratica da trasferire ai colleghi</h3><p>Prima di inviare un prompt, porsi una sola domanda: «Se questo testo finisse su un server pubblico, qualcuno potrebbe riconoscere un alunno, un collega o una famiglia del mio istituto?» Se la risposta è sì, riformulare con ruoli generici. Questa regola, semplice da ricordare e da insegnare, copre la quasi totalità dei casi d'uso del prompting didattico.</p><table class="libro-table"><tr><td>Collegamento con M1
+I tre livelli d'uso visti in M1 restano il riferimento: nel Livello 1 (uso docente) e nel Livello 2 (uso mediato) il rischio privacy è basso proprio perché nessun dato degli alunni viene inviato. Il prompting descritto in questo modulo opera quasi interamente a questi due livelli.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-3">
+  <div class="page-header">
+    <span class="chapter-num">9</span>
+    <h2>9. Il formatore interno: trasferire il prompting ai colleghi</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – le strategie formative sono indipendenti dall'evoluzione degli strumenti</td></tr></table><h3 class="libro-h3">8.1 Tre mosse per insegnare il prompting</h3><p>1. Il confronto dal vivo</p><p>Apri il chatbot in proiezione. Digita un prompt generico, mostra l'output. Poi digita lo stesso obiettivo con un prompt R-D-C-V e mostra il confronto. Il confronto visivo diretto è il modo più efficace per far capire ai colleghi l'importanza del prompting strutturato.</p><p>2. La griglia come scaffold</p><p>Consegna ai colleghi la griglia R-D-C-V stampata. Chiedi loro di completare i 4 campi sul proprio argomento di insegnamento prima di aprire il chatbot. Basta completare la griglia per avere un prompt funzionante.</p><p>3. L'iterazione guidata</p><p>Non concludere il laboratorio al primo output. Includi sempre almeno un ciclo: output → revisione → prompt di affinamento → nuovo output. Senza questo passaggio, i colleghi credono che il primo prompt debba essere perfetto.</p><h3 class="libro-h3">8.2 Gestire le resistenze più frequenti</h3><table class="libro-table"><tr><th>Resistenza frequente</th><th>Risposta formativa</th></tr><tr><td>&quot;Ci vuole troppo tempo a scrivere il prompt&quot;</td><td>Mostrare che 5 minuti di prompt strutturato risparmiano 30 minuti di rielaborazione dell'output.</td></tr><tr><td>&quot;L'IA sbaglia sempre&quot;</td><td>Mostrare che la qualità dell'output migliora drasticamente con prompt strutturati. Fare il confronto dal vivo.</td></tr><tr><td>&quot;Non ho tempo per imparare queste cose&quot;</td><td>Iniziare con UN prompt su UN'attività ricorrente. La curva di apprendimento è ripida solo all'inizio.</td></tr><tr><td>&quot;Non è la stessa cosa che fare io il materiale&quot;</td><td>Concordare: l'IA produce una bozza. Il docente la finalizza. Il tempo totale si riduce.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-4">
+  <div class="page-header">
+    <span class="chapter-num">10</span>
+    <h2>10. Esempi pronti all'uso (prompt templates)</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>⚠ Contenuto in aggiornamento – testare e validare ogni prompt prima dell'inserimento nella library dell'istituto</td></tr></table><p>I template seguenti sono punti di partenza, non output definitivi. Adattare sempre il contesto (classe, disciplina, livello) al proprio caso specifico.</p><table class="libro-table"><tr><td>TEMPLATE 1 – Lezione interattiva (Primaria, qualsiasi disciplina)
+«Sei un docente esperto di [DISCIPLINA] per la scuola primaria.
+Progetta una lezione interattiva di [DURATA] minuti su [ARGOMENTO]
+per una classe [ORDINE] ([ETÀ] anni, [N] alunni, [PROFILO CLASSE]).
+
+Struttura obbligatoria:
+1. Domanda stimolo iniziale (5 min)
+2. Attività principale (specificare tipo: osservativa / laboratoriale /
+   discussione / lettura + domande) ([TEMPO])
+3. Verifica conclusiva: exit ticket con 2 domande ([TEMPO])
+
+Requisiti: linguaggio adatto a [ETÀ] anni, includi un esempio concreto,
+indica i materiali necessari, segnala possibili adattamenti per alunni BES.»</td></tr></table><table class="libro-table"><tr><td>TEMPLATE 2 – Domande per valutazione formativa (qualsiasi ordine)
+«Sei un esperto di valutazione formativa per la scuola [ORDINE].
+Ho appena concluso un'unità su [ARGOMENTO] con la classe [ORDINE]
+([ETÀ] anni, livello [LIVELLO]).
+
+Crea 10 domande di verifica formativa. Suddividi così:
+– 4 domande a risposta chiusa (vero/falso o scelta multipla)
+– 3 domande a risposta aperta breve (max 2-3 righe)
+– 2 domande a risposta grafica (schema, disegno, mappa)
+– 1 domanda metacognitiva (cosa ho imparato / cosa mi è rimasto difficile)
+
+Indica per ogni domanda il livello cognitivo (memorizzazione,
+comprensione, applicazione, analisi).»</td></tr></table><table class="libro-table"><tr><td>TEMPLATE 3 – Attività cooperativa (Secondaria I grado)
+«Progetta un'attività cooperativa di [DURATA] minuti su [ARGOMENTO]
+per una classe [ORDINE] secondaria di I grado ([ETÀ] anni).
+La classe ha [N] alunni, suddivisibili in [M] gruppi da [K] persone.
+
+Ogni gruppo deve avere un ruolo specifico (definiscili tu).
+Includi: consegna scritta per ogni gruppo, materiali necessari,
+scheda di osservazione condivisa per il docente,
+prodotto finale da presentare alla classe (max 5 min per gruppo).
+
+Aggiungi indicazioni per gestire un gruppo con alunni in difficoltà.»</td></tr></table><table class="libro-table"><tr><td>TEMPLATE 4 – Prompt per la formazione interna (uso del formatore)
+«Sei un esperto di formazione professionale dei docenti sull'IA.
+Sto preparando un incontro di 2 ore per docenti della [ORDINE] scolastica.
+L'obiettivo è far capire la differenza tra prompt generico e prompt strutturato.
+
+Crea:
+1. 3 scenari brevi (un paragrafo ciascuno) che mostrano lo stesso
+   obiettivo didattico raggiunto con un prompt debole vs uno strutturato.
+2. Una griglia di autovalutazione in 5 punti per aiutare i docenti
+   a giudicare la qualità del proprio prompt.
+3. 5 domande di riflessione per la discussione finale in plenaria.
+
+Il pubblico sono docenti della primaria, non esperti di tecnologia.»</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-5">
+  <div class="page-header">
+    <span class="chapter-num">11</span>
+    <h2>11. Glossario essenziale</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><th>Termine</th><th>Definizione</th></tr><tr><td>Chain-of-thought</td><td>Tecnica in cui si chiede all'IA di mostrare il ragionamento passo dopo passo. Equivalente al prompt di ragionamento guidato.</td></tr><tr><td>Few-shot</td><td>Prompting con 1-3 esempi del risultato atteso. Opposto di 'zero-shot' (nessun esempio).</td></tr><tr><td>Framework R-D-C-V</td><td>Struttura per costruire prompt didattici: Ruolo, Destinatari, Compito, Vincoli.</td></tr><tr><td>Hallucination</td><td>Vedi 'Allucinazione' (M1): output falso prodotto dall'IA con la stessa sicurezza di uno vero.</td></tr><tr><td>Iterazione</td><td>Processo di miglioramento progressivo del prompt attraverso prompt di affinamento successivi.</td></tr><tr><td>Output</td><td>Il risultato prodotto dall'IA a partire dal prompt. La qualità dipende dalla qualità del prompt.</td></tr><tr><td>Prompt</td><td>Istruzione fornita dall'utente a un sistema IA generativo per ottenere un output specifico.</td></tr><tr><td>Prompt library</td><td>Raccolta organizzata di prompt testati, validati e pronti all'uso, condivisibile tra colleghi.</td></tr><tr><td>Role prompting</td><td>Assegnare all'IA un ruolo professionale preciso prima di formulare la richiesta.</td></tr><tr><td>Scaffolding</td><td>Supporto strutturato che guida un processo di apprendimento. La griglia R-D-C-V è uno scaffold per il prompting.</td></tr><tr><td>Token</td><td>Unità di testo elaborata dai modelli LLM (circa 4 caratteri in inglese). Rilevante per i limiti di lunghezza del prompt.</td></tr><tr><td>Zero-shot</td><td>Prompting senza esempi. Produce output meno calibrati del few-shot, ma richiede meno preparazione.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-6">
+  <div class="page-header">
+    <span class="chapter-num">12</span>
+    <h2>12. Riferimenti</h2>
+  </div>
+  <div class="page-body">
+    <ul class="libro-list"><li>Commissione europea (2022). Ethical guidelines on the use of AI and data in teaching and learning for educators. Publications Office of the EU.</li><li>UNESCO (2024). AI competency framework for teachers. UNESCO. [Sezione: Pedagogia con IA e prompting]</li><li>UNESCO (2023). Guidance for generative AI in education and research. [Cap. 3: Uso responsabile nella didattica]</li><li>Ministero dell'Istruzione e del Merito (2025). D.M. 166/2025 – Linee guida per l'introduzione dell'IA nelle scuole.</li><li>White, J. et al. (2023). A prompt pattern catalog to enhance prompt engineering with ChatGPT. arXiv:2302.11382.</li><li>Brown, T. et al. (2020). Language models are few-shot learners. Advances in Neural Information Processing Systems, 33.</li></ul><p>Fine dispensa – Modulo 2  |  Formare i formatori sull'IA nella scuola  |  A.S. 2025/2026</p>
+  </div>
+</div>
+    </div>
+    <footer id="footer-nav">
+      <button class="nav-btn" id="btn-prev">&#8592; Precedente</button>
+      <span id="page-counter">Pagina 1 di 7</span>
+      <button class="nav-btn" id="btn-next">Successivo &#8594;</button>
+    </footer>
+  </div>
+</div>
+<script>
+const TOTAL = 7;
+const visited = new Set([0]);
+let current = 0;
+
+function goTo(n) {
+  if (n < 0 || n >= TOTAL) return;
+  document.getElementById('page-' + current).classList.remove('active');
+  const oldNav = document.querySelector('[data-page="' + current + '"]');
+  if (oldNav) oldNav.classList.remove('active');
+
+  current = n;
+  visited.add(n);
+
+  document.getElementById('page-' + current).classList.add('active');
+  const newNav = document.querySelector('[data-page="' + current + '"]');
+  if (newNav) {
+    newNav.classList.add('active');
+    newNav.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const p = parseInt(el.dataset.page);
+    if (visited.has(p)) el.classList.add('visited');
+  });
+
+  const pct = Math.round((visited.size / TOTAL) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('page-counter').textContent = 'Pagina ' + (current + 1) + ' di ' + TOTAL;
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === TOTAL - 1;
+  document.getElementById('content-area').scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
+});
+
+document.getElementById('btn-prev').addEventListener('click', () => goTo(current - 1));
+document.getElementById('btn-next').addEventListener('click', () => goTo(current + 1));
+document.getElementById('burger-btn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+});
+document.getElementById('overlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+});
+goTo(0);
+</script>
+</body>
+</html>

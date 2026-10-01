@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modulo 5 — Implementazione pratica e accompagnamento dei docenti</title>
+<style>
+:root {
+  --navy:  #1A3560;
+  --teal:  #27AE60;
+  --amber: #E8820C;
+  --white: #FFFFFF;
+  --light: #F7F9FC;
+  --grey:  #6B7280;
+  --dark:  #1F2937;
+  --sidebar-w: 268px;
+  --radius: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--dark); }
+
+/* ── Layout ── */
+#app { display: flex; height: 100vh; }
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--navy); color: var(--white);
+  display: flex; flex-direction: column;
+  overflow: hidden; transition: transform .3s ease;
+  z-index: 100;
+}
+#sidebar-header {
+  padding: 18px 16px 12px;
+  background: color-mix(in srgb, var(--navy) 80%, black);
+  border-bottom: 2px solid var(--teal);
+}
+#sidebar-header .mod-badge {
+  font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 4px;
+}
+#sidebar-header .mod-title {
+  font-size: .78rem; font-weight: 600; line-height: 1.4; color: #CBD5E1;
+}
+#nav-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+#nav-list::-webkit-scrollbar { width: 4px; }
+#nav-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+.nav-item {
+  padding: 9px 16px; font-size: .78rem; cursor: pointer;
+  border-left: 3px solid transparent; color: #94A3B8;
+  transition: all .15s; line-height: 1.35;
+}
+.nav-item:hover { background: rgba(255,255,255,.06); color: #E2E8F0; }
+.nav-item.active { border-left-color: var(--teal); background: rgba(255,255,255,.1); color: var(--white); font-weight: 600; }
+.nav-item.visited { color: #CBD5E1; }
+#progress-area { padding: 12px 16px; border-top: 1px solid #334155; }
+#progress-area .prog-label { font-size: .68rem; color: #94A3B8; margin-bottom: 5px; }
+#prog-bar { height: 5px; background: #334155; border-radius: 99px; overflow: hidden; }
+#prog-fill { height: 100%; background: var(--teal); width: 0%; transition: width .4s ease; border-radius: 99px; }
+
+/* ── Main content ── */
+#content-area {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0;
+}
+.page { display: none; min-height: 100%; }
+.page.active { display: flex; flex-direction: column; }
+
+/* Cover */
+.cover-page {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  align-items: center; text-align: center; padding: 40px 24px;
+  background: linear-gradient(135deg, var(--cover-color, #27AE60) 0%, color-mix(in srgb, var(--cover-color, #27AE60) 60%, black) 100%);
+  color: var(--white); min-height: 100%;
+}
+.cover-badge { background: rgba(255,255,255,.2); border-radius: 99px; padding: 5px 18px; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 20px; }
+.cover-title { font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 800; line-height: 1.25; max-width: 600px; margin-bottom: 18px; }
+.cover-sub { font-size: .88rem; color: rgba(255,255,255,.8); margin-bottom: 6px; }
+.cover-hint { margin-top: 40px; font-size: .75rem; color: rgba(255,255,255,.5); }
+
+/* Page content */
+.page-header {
+  background: var(--white); border-bottom: 2px solid var(--teal);
+  padding: 20px 36px 16px; display: flex; align-items: baseline; gap: 14px;
+  position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.chapter-num {
+  background: var(--teal); color: var(--white);
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 700; flex-shrink: 0;
+}
+.page-header h2 { font-size: clamp(.95rem, 2vw, 1.25rem); font-weight: 700; color: var(--navy); line-height: 1.3; }
+.page-body { padding: 28px 36px 32px; flex: 1; max-width: 820px; }
+
+/* Typography */
+.page-body p { font-family: Georgia, 'Times New Roman', serif; font-size: .97rem; line-height: 1.75; color: #374151; margin-bottom: 14px; }
+.libro-h3 { font-size: 1.05rem; font-weight: 700; color: var(--teal); margin: 24px 0 10px; padding-left: 10px; border-left: 3px solid var(--teal); }
+.libro-h4 { font-size: .95rem; font-weight: 700; color: var(--navy); margin: 18px 0 8px; }
+.libro-list { margin: 10px 0 14px 20px; }
+.libro-list li { font-family: Georgia, serif; font-size: .95rem; line-height: 1.7; color: #374151; margin-bottom: 6px; }
+
+/* Tables */
+.libro-table { width: 100%; border-collapse: collapse; margin: 16px 0 20px; font-size: .87rem; border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.libro-table th { background: var(--navy); color: var(--white); padding: 10px 14px; text-align: left; font-weight: 600; }
+.libro-table td { padding: 9px 14px; border-bottom: 1px solid #E5E7EB; vertical-align: top; line-height: 1.55; }
+.libro-table tr:nth-child(even) td { background: var(--light); }
+.libro-table tr:last-child td { border-bottom: none; }
+/* Single-cell tables → callout */
+.libro-table.callout { background: #EFF6FF; border-left: 4px solid var(--teal); }
+
+/* Callout boxes */
+.libro-callout { background: #FFF8ED; border-left: 4px solid var(--amber); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 14px 0; font-size: .9rem; line-height: 1.65; color: #374151; font-family: Georgia, serif; }
+
+/* ── Footer nav ── */
+#footer-nav {
+  background: var(--white); border-top: 1px solid #E5E7EB;
+  padding: 12px 36px; display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; box-shadow: 0 -1px 4px rgba(0,0,0,.04);
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 6px; padding: 8px 18px;
+  background: var(--teal); color: var(--white); border: none; border-radius: 6px;
+  cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .15s;
+}
+.nav-btn:hover { opacity: .85; }
+.nav-btn:disabled { background: #D1D5DB; cursor: default; }
+#page-counter { font-size: .78rem; color: var(--grey); }
+
+/* ── Burger (mobile) ── */
+#burger-btn {
+  display: none; position: fixed; top: 12px; left: 12px; z-index: 200;
+  background: var(--navy); color: var(--white); border: none; border-radius: 6px;
+  width: 38px; height: 38px; cursor: pointer; font-size: 1.1rem;
+}
+#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 90; }
+
+@media (max-width: 680px) {
+  #burger-btn { display: flex; align-items: center; justify-content: center; }
+  #sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); }
+  #sidebar.open { transform: translateX(0); }
+  #overlay.open { display: block; }
+  #content-area { width: 100%; }
+  .page-body { padding: 16px 18px 24px; }
+  .page-header { padding: 14px 18px 12px; }
+  #footer-nav { padding: 10px 18px; }
+  .nav-btn { padding: 7px 14px; }
+}
+</style>
+</head>
+<body>
+<button id="burger-btn" aria-label="Apri menu">&#9776;</button>
+<div id="overlay"></div>
+<div id="app">
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div class="mod-badge">Modulo 5 · 3 ore</div>
+      <div class="mod-title">Implementazione pratica e accompagnamento dei docenti</div>
+    </div>
+    <div id="nav-list">
+<div class="nav-item active" data-page="0" onclick="goTo(0)">Copertina</div>
+<div class="nav-item" data-page="1" onclick="goTo(1)">1. Introduzione: il passaggio chiave del TTT</div>
+<div class="nav-item" data-page="2" onclick="goTo(2)">2. Il salto da utente a formatore</div>
+<div class="nav-item" data-page="3" onclick="goTo(3)">3. Quattro profili di colleghi</div>
+<div class="nav-item" data-page="4" onclick="goTo(4)">4. Progettare la mini-UdA formativa</div>
+<div class="nav-item" data-page="5" onclick="goTo(5)">5. Gestire le resistenze</div>
+<div class="nav-item" data-page="6" onclick="goTo(6)">6. Esempi per ordine scolastico</div>
+<div class="nav-item" data-page="7" onclick="goTo(7)">7. Uso curricolarmente coerente dell'IA</div>
+<div class="nav-item" data-page="8" onclick="goTo(8)">8. L'introduzione progressiva come vincolo progettuale</div>
+<div class="nav-item" data-page="9" onclick="goTo(9)">9. L'ecosistema del formatore nell'istituto</div>
+<div class="nav-item" data-page="10" onclick="goTo(10)">10. Supervisione e qualità</div>
+<div class="nav-item" data-page="11" onclick="goTo(11)">11. Glossario</div>
+<div class="nav-item" data-page="12" onclick="goTo(12)">12. Riferimenti</div>
+    </div>
+    <div id="progress-area">
+      <div class="prog-label">Progresso: <span id="prog-pct">0%</span></div>
+      <div id="prog-bar"><div id="prog-fill"></div></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+    <div id="content-area">
+
+<div class="page active" id="page-0">
+  <div class="cover-page" style="--cover-color:#27AE60">
+    <div class="cover-badge">Modulo 5</div>
+    <h1 class="cover-title">Implementazione pratica e accompagnamento dei docenti</h1>
+    <p class="cover-sub">Libro del partecipante &nbsp;·&nbsp; 3 ore</p>
+    <p class="cover-sub">Corso: Formare i formatori sull'IA nella scuola &nbsp;·&nbsp; Incontro 7</p>
+    <p class="cover-hint">Usa le frecce ← → o i pulsanti per navigare</p>
+  </div>
+</div>
+<div class="page" id="page-1">
+  <div class="page-header">
+    <span class="chapter-num">1</span>
+    <h2>1. Introduzione: il passaggio chiave del TTT</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – queste competenze rimangono valide indipendentemente dall'evoluzione degli strumenti</td></tr></table><p>I moduli 1-4 hanno costruito le competenze tecnico-normative necessarie per usare l'IA in modo responsabile. Il Modulo 5 richiede un cambiamento di prospettiva: non si tratta più di sapere usare gli strumenti, ma di saper accompagnare altri nel farlo.</p><table class="libro-table"><tr><td>L'obiettivo del modulo
+Preparare i futuri formatori a progettare, organizzare e supervisionare attività di accompagnamento per i colleghi dell'istituto. Il formatore interno non è un tecnico IA: è un professionista dell'educazione che sa creare le condizioni perché altri apprendano.</td></tr></table><p>Questo modulo si articola intorno a quattro aree:</p><ul class="libro-list"><li>Il salto TTT: le competenze del formatore che si aggiungono a quelle dell'utente.</li><li>La progettazione: costruire mini-interventi formativi brevi, efficaci e trasferibili.</li><li>La gestione: profili di colleghi, resistenze, strategie di accompagnamento.</li><li>Gli esempi e la supervisione: scenari per ordine scolastico, criteri di qualità, valutazione dell'impatto.</li></ul>
+  </div>
+</div>
+<div class="page" id="page-2">
+  <div class="page-header">
+    <span class="chapter-num">2</span>
+    <h2>2. Il salto da utente a formatore</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – distillazione delle ricerche sulla formazione professionale degli insegnanti</td></tr></table><p>La differenza tra sapere usare l'IA e saper formare altri a usarla non è quantitativa (sapere di più), ma qualitativa (saper fare cose diverse).</p><table class="libro-table"><tr><th>Competenze dell'utente IA</th><th>Competenze aggiuntive del formatore TTT</th></tr><tr><td>Sa costruire prompt strutturati (R-D-C-V)</td><td>Sa insegnare il framework R-D-C-V a colleghi che non l'hanno mai sentito</td></tr><tr><td>Conosce le 4 classi di rischio AI Act</td><td>Sa spiegare le implicazioni pratiche per il proprio istituto senza citare articoli di memoria</td></tr><tr><td>Sa applicare la checklist di conformità</td><td>Sa far percepire la checklist come tutela, non come burocrazia</td></tr><tr><td>Sa verificare gli output IA</td><td>Sa creare un'esperienza in cui i colleghi scoprono da soli perché verificare</td></tr><tr><td>Sa differenziare materiali con l'IA</td><td>Sa progettare 45 minuti in cui anche il collega più scettico esce con qualcosa di utile</td></tr></table><table class="libro-table"><tr><td>⚠ Il formatore interno non ha bisogno di sapere tutto sull'IA. Ha bisogno di sapere abbastanza da rispondere alle domande dei colleghi, riconoscere usi scorretti, e creare esperienze di apprendimento che cambino pratiche reali.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-3">
+  <div class="page-header">
+    <span class="chapter-num">3</span>
+    <h2>3. Quattro profili di colleghi</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – basato sulla ricerca sul change management nelle organizzazioni scolastiche</td></tr></table><p>Ogni istituto presenta un mix di profili diversi. Il formatore interno deve saper riconoscerli e adattare il proprio approccio — senza aspettarsi che tutti partano dallo stesso punto.</p><h3 class="libro-h3">3.1 L'entusiasta acritico</h3><p>Profilo: già usa l'IA, spesso in modo avanzato, ma senza consapevolezza dei rischi e dei limiti.</p><ul class="libro-list"><li>Rischio: usa output senza verifica, ignora privacy, crea aspettative irrealistiche nei colleghi o negli alunni.</li><li>Strategia: non frenare l'entusiasmo, riorientarlo. Partire da un caso concreto di allucinazione o bias che ha già incontrato. La checklist di conformità si presenta come strumento di tutela professionale, non come vincolo burocratico.</li></ul><h3 class="libro-h3">3.2 Lo scettico costruttivo</h3><p>Profilo: ha dubbi legittimi, vuole capire davvero prima di adottare. Non rifiuta, ma non si fida facilmente.</p><ul class="libro-list"><li>Rischio: può bloccarsi senza risposta soddisfacente alle sue domande. Rischia di diventare un freno per il team se non viene coinvolto.</li><li>Strategia: ascoltare prima. I suoi dubbi sono spesso i più profondi e i più utili per il gruppo. Rispondere con fonti precise (AI Act art. 4, GDPR, DM 166/2025). Coinvolgerlo nella costruzione della policy d'istituto: da scettico diventa alleato e custode della qualità.</li></ul><h3 class="libro-h3">3.3 Il neutro pragmatico</h3><p>Profilo: non ha pregiudizi ideologici verso l'IA ma non ha ancora visto un motivo per adottarla. Vuole soluzioni concrete al proprio problema.</p><ul class="libro-list"><li>Rischio: se il primo uso fallisce, diventa scettico. È sensibile al fattore tempo: un intervento lungo e teorico lo perde.</li><li>Strategia: partire da un problema reale che ha (correzione, differenziazione, quiz, feedback). Mostrare 1 strumento che risolve quel problema questa settimana. Nessuna teoria: 5 minuti di pratica con un prompt funzionante.</li></ul><h3 class="libro-h3">3.4 Il resistente valoriale</h3><p>Profilo: posizione etica o pedagogica consolidata. Può opporsi all'IA per ragioni di principio (sostituzione dei docenti, equità, autenticità dell'apprendimento).</p><ul class="libro-list"><li>Rischio: può percepire la formazione come pressione istituzionale. Se forzato, diventa oppositore attivo.</li><li>Strategia: rispettare la posizione senza cercare di convincerlo. L'obbligo normativo è di AI literacy (consapevolezza), non di uso. Offrire: 'Posso mostrarti cosa sta succedendo, anche solo per capire cosa stanno usando i tuoi alunni.' Restare in relazione.</li></ul>
+  </div>
+</div>
+<div class="page" id="page-4">
+  <div class="page-header">
+    <span class="chapter-num">4</span>
+    <h2>4. Progettare la mini-UdA formativa</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – il formato mini-UdA è basato su principi consolidati di instructional design</td></tr></table><p>Una mini-UdA formativa è un intervento di accompagnamento breve (45-90 min) rivolto ai colleghi. Non è una lezione sull'IA: è un'esperienza di apprendimento progettata per cambiare una pratica specifica.</p><h3 class="libro-h3">4.1 I 8 componenti della mini-UdA formativa</h3><table class="libro-table"><tr><th>#</th><th>Componente</th><th>Contenuto e indicazioni operative</th></tr><tr><td>1</td><td>Titolo e destinatari</td><td>Chi partecipa? Quale ordine? Quale livello di esperienza pregressa con l'IA? Il titolo deve riflettere il beneficio concreto ('Come preparo una scheda differenziata in 5 minuti'), non il contenuto teorico.</td></tr><tr><td>2</td><td>1 obiettivo concreto</td><td>Una sola cosa che i colleghi sapranno fare alla fine. Non 3 obiettivi: uno solo, osservabile e verificabile. Esempio: 'Al termine, ogni partecipante avrà costruito un prompt strutturato per il proprio ordine scolastico.'</td></tr><tr><td>3</td><td>Tempo e logistica</td><td>Max 45-60 min per intervento breve. Struttura: apertura (5 min), pratica (35 min), riflessione (15 min), chiusura (5 min). Cosa serve: proiettore, connessione, schede stampate?</td></tr><tr><td>4</td><td>Attività pratica al centro</td><td>Non alla fine: al centro. La pratica prima o subito dopo una brevissima introduzione. Chi non ha mai usato un chatbot deve provare entro i primi 10 minuti, con supporto.</td></tr><tr><td>5</td><td>Esempi per il loro ordine</td><td>Gli esempi devono essere riconoscibili dai partecipanti. Un docente di infanzia non è motivato da esempi di secondaria. Preparare almeno 2 esempi specifici per l'ordine del gruppo.</td></tr><tr><td>6</td><td>Cautele integrate</td><td>Privacy, età minima, checklist di conformità: non in appendice, ma dentro l'attività pratica. Il momento della pratica è il momento migliore per mostrare cosa si fa e cosa non si fa.</td></tr><tr><td>7</td><td>Verifica finale</td><td>Come sai che ha funzionato? Exit ticket rapido: 1 cosa utile, 1 cosa che proverai questa settimana, 1 domanda che ti è rimasta. Raccogliere fisicamente (non solo a parole).</td></tr><tr><td>8</td><td>Follow-up e risorse</td><td>Cosa lasci ai colleghi dopo l'intervento? Un prompt da portare via, un link, una scheda stampata, un contatto diretto. Il follow-up a 1-2 settimane è il momento più importante per il trasferimento.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-5">
+  <div class="page-header">
+    <span class="chapter-num">5</span>
+    <h2>5. Gestire le resistenze</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – queste resistenze si ripetono in tutti i contesti istituzionali in cui si introduce l'IA</td></tr></table><table class="libro-table"><tr><th>Resistenza</th><th>Strategia del formatore interno</th></tr><tr><td>«Non ho tempo per queste cose»</td><td>Mostrare 1 uso concreto che fa risparmiare tempo la settimana prossima. 5 minuti di pratica: 'Questo prompt ti genera una scheda operativa in 2 minuti anziché 20.' Non teoria: risparmio immediato e misurabile.</td></tr><tr><td>«Sono troppo vecchio/a per l'IA»</td><td>'Sei troppo esperto per non capirla.' Chi conosce la didattica usa l'IA meglio di chi non la conosce: sa cosa chiedere. Partire da ciò che già fa: correzione, differenziazione, quiz. L'IA non cambia cosa fa, cambia come lo prepara.</td></tr><tr><td>«E la privacy? È illegale.»</td><td>Risposta precisa, non rassicurante generica. Distinguere uso docente (basso rischio) da uso con dati alunni (alto rischio). Citare le tre regole operative di M4. La checklist di conformità è una tutela, non un ostacolo.</td></tr><tr><td>«Fa tutto l'IA: non serve più il docente»</td><td>'Il valore del docente si misura nel giudizio, nella relazione e nella revisione critica — competenze che l'IA non ha.' Mostrare live un'allucinazione o un bias: il controllo umano è la competenza più preziosa nel mondo dell'IA.</td></tr><tr><td>«La direzione non lo permette»</td><td>Coinvolgere il DS e citare l'art. 4 AI Act: la formazione sull'IA non è opzionale. Proporre di inserire l'uso responsabile dell'IA nel prossimo aggiornamento del PTOF o nel piano di formazione.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-6">
+  <div class="page-header">
+    <span class="chapter-num">6</span>
+    <h2>6. Esempi per ordine scolastico</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>⚠ Contenuto in aggiornamento – gli strumenti citati vanno verificati periodicamente; i principi pedagogici sono stabili</td></tr></table><h3 class="libro-h3">6.1 Scuola dell'infanzia</h3><p>L'IA nella scuola dell'infanzia è sempre e solo uno strumento dell'educatrice. I bambini 3-6 anni non interagiscono con sistemi IA. Il formatore lavora sulle pratiche professionali dell'adulto.</p><ul class="libro-list"><li>Attività pratica: far costruire all'educatrice un prompt per generare 2 attività ludiche sul campo di esperienza della sua prossima settimana.</li><li>Esempio di prompt: «Sei un'educatrice esperta di scuola dell'infanzia. Progetta 2 attività ludiche di 20 min sul campo 'Il corpo e il movimento' per bambini di 5 anni. Materiali di recupero, nessun digitale, variante per bambino con difficoltà motorie.»</li><li>Cautele da integrare: nessun account bambini, nessun dato identificativo, output sempre rivisto dall'educatrice prima dell'uso.</li></ul><h3 class="libro-h3">6.2 Scuola primaria</h3><p>Il formato più efficace per la primaria è l'uso mediato (Livello 2): il docente gestisce l'IA, la classe osserva e discute. Nessun account alunni, nessun dato inviato.</p><ul class="libro-list"><li>Scenario 1 (Uso mediato): il docente chiede all'IA di scrivere una storia su input degli alunni. La classe valuta: è bella? È vera? Cosa manca?</li><li>Scenario 2 (Uso docente): usare ChatGPT per generare 3 versioni dello stesso testo con lessico diverso (base, standard, avanzato). Distribuire quella adatta a ciascun alunno.</li><li>Scenario 3 (O.M. 3/2025): i giudizi sintetici non si delegano mai all'IA. L'IA può aiutare a costruire i descrittori, la deliberazione collegiale è sempre umana.</li></ul><h3 class="libro-h3">6.3 Secondaria di I grado</h3><p>Nella secondaria di I grado l'IA può diventare oggetto di studio critico, oltre che strumento. I ragazzi 11-14 anni possono analizzare e contestare gli output IA.</p><ul class="libro-list"><li>Alfabetizzazione critica: gli alunni scrivono un testo argomentativo, poi confrontano il loro con quello dell'IA. Chi argomenta meglio? Perché?</li><li>Fact-checking: il docente chiede all'IA di descrivere un evento storico. La classe individua gli errori usando il libro di testo come fonte verificabile.</li><li>Il prompt come strumento di sintesi: gli alunni costruiscono un prompt per riassumere un capitolo e valutano la qualità del risultato.</li></ul>
+  </div>
+</div>
+<div class="page" id="page-7">
+  <div class="page-header">
+    <span class="chapter-num">7</span>
+    <h2>7. Uso curricolarmente coerente dell'IA</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – il principio di coerenza curricolare è indipendente dagli strumenti</td></tr></table><table class="libro-table"><tr><td>Principio fondamentale
+Non si aggiunge l'IA al curricolo. Si usa l'IA per raggiungere obiettivi già presenti nelle Indicazioni Nazionali (D.M. 221/2025), nel PTOF e nell'UdA. Se non esiste un obiettivo curricolare, l'IA non ha senso pedagogico.</td></tr></table><p>La domanda che il formatore insegna ai colleghi a porsi:</p><ul class="libro-list"><li>NON: «Come posso usare l'IA in questa lezione?»</li><li>SÌ: «Quale obiettivo curricolare voglio raggiungere, e l'IA può aiutarmi a raggiungerlo più efficacemente?»</li></ul><table class="libro-table"><tr><th>❌ Non curricolarmente coerente</th><th>✓ Curricolarmente coerente</th></tr><tr><td>Usare ChatGPT perché è innovativo</td><td>Usare ChatGPT per raggiungere il traguardo 'produrre testi per scopi diversi' (Italiano, primaria)</td></tr><tr><td>Fare quiz con Quizizz per 'gamificare'</td><td>Usare Quizizz per valutare il raggiungimento di un obiettivo disciplinare specifico</td></tr><tr><td>Mostrare l'IA come tecnologia del futuro</td><td>Usare l'IA in Educazione civica per discutere algoritmi e diritti digitali (curricolo già previsto)</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-8">
+  <div class="page-header">
+    <span class="chapter-num">8</span>
+    <h2>8. L'introduzione progressiva come vincolo progettuale</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Contenuto stabile – il principio di progressività è un vincolo progettuale, non una raccomandazione</td></tr></table><table class="libro-table"><tr><td>⚠ Vincolo progettuale: non si introduce tutto subito. Si inizia da un uso, si valuta l'impatto, si aggiunge il successivo. Nel primo ciclo: massima cautela, minima disruption, massimo ancoraggio curricolare.</td></tr></table><table class="libro-table"><tr><th>Fase</th><th>Titolo</th><th>Azione</th><th>Condizione per passare alla fase successiva</th></tr><tr><td>Fase 0</td><td>Mappare</td><td>Cosa già usano i colleghi? Con quali strumenti? Con quali pratiche?</td><td>Avere un quadro realistico del punto di partenza</td></tr><tr><td>Fase 1</td><td>Un uso</td><td>Iniziare con 1 strumento, 1 ordine, 1-2 docenti. Documentare. Raccogliere feedback.</td><td>La pratica è stabile e i docenti la replicano autonomamente</td></tr><tr><td>Fase 2</td><td>Allargare</td><td>Proporre a un team o dipartimento. Fornire la mini-UdA testata. Accompagnare.</td><td>L'impatto didattico è positivo e documentato</td></tr><tr><td>Fase 3</td><td>Istituzionalizzare</td><td>Inserire nel PTOF, piano di formazione, policy d'istituto. Criteri comuni.</td><td>Il formatore interno è una figura riconosciuta dall'istituto</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-9">
+  <div class="page-header">
+    <span class="chapter-num">9</span>
+    <h2>9. L'ecosistema del formatore nell'istituto</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><th>Figura</th><th>Ruolo rispetto all'IA</th><th>Come coinvolgerla</th></tr><tr><td>Dirigente scolastico</td><td>Titolare del trattamento (GDPR). Autorizza strumenti ad uso istituzionale. Governance: policy, PTOF.</td><td>Presentare il percorso come risposta all'obbligo AI literacy (art. 4 AI Act). Proporre delibere concrete.</td></tr><tr><td>DPO</td><td>Consulenza GDPR e DPA. Verifica conformità. Parere su strumenti con dati alunni.</td><td>Coinvolgere PRIMA dell'adozione di qualsiasi strumento con dati alunni. Chiedere parere scritto.</td></tr><tr><td>Animatore digitale</td><td>Competenze tecniche, infrastruttura, collegamento con reti PNRR. Spesso coincide col formatore.</td><td>Coordinare obiettivi formativi e tecnici. Condividere la prompt library e gli strumenti validati.</td></tr><tr><td>Referenti di team/dipartimento</td><td>Moltiplicatori: raccolgono feedback, validano esempi nel contesto disciplinare reale.</td><td>Coinvolgere nella costruzione degli esempi per ordine e disciplina. Far costruire la library di dipartimento.</td></tr><tr><td>Alunni e famiglie</td><td>Stakeholder finali. Le famiglie devono essere informate. Gli alunni possono diventare protagonisti di percorsi critici.</td><td>Aggiornare l'informativa privacy. Inserire clausole IA nel Patto di corresponsabilità. Attività curricolari.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-10">
+  <div class="page-header">
+    <span class="chapter-num">10</span>
+    <h2>10. Supervisione e qualità</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><td>Indicatori di efficacia formativa
+I colleghi costruiscono prompt autonomamente. Almeno 1 uso concreto applicato in classe nella settimana successiva. I colleghi identificano allucinazioni o bias in un output mostrato. Si usa la checklist di conformità prima di adottare uno strumento. La privacy è rispettata: nessun dato nominativo nei prompt.</td></tr></table><table class="libro-table"><tr><td>⚠ Segnali di pratiche da correggere: output IA usati senza revisione; prompt con nomi o dati identificativi degli alunni; strumenti adottati senza DPA o verifica età minima; valutazione degli alunni affidata all'IA; formazione ricevuta ma nessun cambiamento di pratica.</td></tr></table><h3 class="libro-h3">I 4 livelli di valutazione della formazione (modello Kirkpatrick adattato)</h3><table class="libro-table"><tr><th>Livello</th><th>Domanda</th><th>Come si misura per la formazione sull'IA</th></tr><tr><td>1 – Reazione</td><td>I colleghi hanno apprezzato?</td><td>Exit ticket al termine: 1 cosa utile, 1 cosa che cambieresti, 1 cosa che proverai.</td></tr><tr><td>2 – Apprendimento</td><td>Hanno acquisito le competenze?</td><td>Osservare se riescono a costruire un prompt, applicare la checklist, riconoscere un'allucinazione.</td></tr><tr><td>3 – Trasferimento</td><td>Hanno cambiato pratiche in classe?</td><td>Contatto di follow-up 1-2 settimane dopo: 'Hai usato qualcosa? Come è andata?'</td></tr><tr><td>4 – Impatto</td><td>Ha migliorato le pratiche d'istituto?</td><td>Nel tempo: policy aggiornata, prompt library condivisa, nuovi formatori interni.</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-11">
+  <div class="page-header">
+    <span class="chapter-num">11</span>
+    <h2>11. Glossario</h2>
+  </div>
+  <div class="page-body">
+    <table class="libro-table"><tr><th>Termine</th><th>Definizione</th></tr><tr><td>Mini-UdA formativa</td><td>Intervento di accompagnamento breve (45-90 min) per colleghi: obiettivo concreto, pratica centrale, verifica finale</td></tr><tr><td>Uso curricolarmente coerente</td><td>Uso dell'IA per raggiungere obiettivi già presenti nel curricolo, non come fine autonomo</td></tr><tr><td>Introduzione progressiva</td><td>Adozione graduale dell'IA: un uso alla volta, valutazione dell'impatto, poi espansione</td></tr><tr><td>Entusiasta acritico</td><td>Profilo di collega che usa l'IA senza consapevolezza dei rischi e dei limiti</td></tr><tr><td>Resistente valoriale</td><td>Profilo di collega con posizione etica o pedagogica consolidata contro l'IA</td></tr><tr><td>Follow-up formativo</td><td>Contatto di verifica dopo 1-2 settimane per valutare il trasferimento delle competenze</td></tr><tr><td>Ecosistema del formatore</td><td>Insieme di figure istituzionali (DS, DPO, animatore digitale, referenti) che supportano il formatore interno</td></tr><tr><td>Modello Kirkpatrick</td><td>Framework di valutazione della formazione in 4 livelli: reazione, apprendimento, trasferimento, impatto</td></tr></table>
+  </div>
+</div>
+<div class="page" id="page-12">
+  <div class="page-header">
+    <span class="chapter-num">12</span>
+    <h2>12. Riferimenti</h2>
+  </div>
+  <div class="page-body">
+    <h3 class="libro-h3">Normative</h3><ul class="libro-list"><li>Parlamento europeo e Consiglio UE (2024). Regolamento (UE) 2024/1689 – AI Act. Art. 4 applicabile dal 2 febbraio 2025.</li><li>Ministero dell'Istruzione e del Merito (2025). D.M. 9 agosto 2025, n. 166 – Linee guida IA nelle scuole.</li><li>Ministero dell'Istruzione e del Merito (2025). D.M. 9 dicembre 2025, n. 221 – Indicazioni nazionali per il primo ciclo.</li><li>Ministero dell'Istruzione e del Merito (2025). D.M. 11 novembre 2025, n. 219 – Snodi formativi per la transizione digitale.</li></ul><h3 class="libro-h3">Framework e ricerca</h3><ul class="libro-list"><li>UNESCO (2024). AI competency framework for teachers.</li><li>Redecker, C. (2017). European Framework for the Digital Competence of Educators: DigCompEdu.</li><li>Kirkpatrick, D.L., &amp; Kirkpatrick, J.D. (2006). Evaluating Training Programs: The Four Levels. Berrett-Koehler.</li></ul><p>Fine dispensa – Modulo 5  |  Formare i formatori sull'IA nella scuola  |  A.S. 2025/2026</p>
+  </div>
+</div>
+    </div>
+    <footer id="footer-nav">
+      <button class="nav-btn" id="btn-prev">&#8592; Precedente</button>
+      <span id="page-counter">Pagina 1 di 13</span>
+      <button class="nav-btn" id="btn-next">Successivo &#8594;</button>
+    </footer>
+  </div>
+</div>
+<script>
+const TOTAL = 13;
+const visited = new Set([0]);
+let current = 0;
+
+function goTo(n) {
+  if (n < 0 || n >= TOTAL) return;
+  document.getElementById('page-' + current).classList.remove('active');
+  const oldNav = document.querySelector('[data-page="' + current + '"]');
+  if (oldNav) oldNav.classList.remove('active');
+
+  current = n;
+  visited.add(n);
+
+  document.getElementById('page-' + current).classList.add('active');
+  const newNav = document.querySelector('[data-page="' + current + '"]');
+  if (newNav) {
+    newNav.classList.add('active');
+    newNav.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  // Mark visited
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const p = parseInt(el.dataset.page);
+    if (visited.has(p)) el.classList.add('visited');
+  });
+
+  // Progress
+  const pct = Math.round((visited.size / TOTAL) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+
+  // Counter
+  document.getElementById('page-counter').textContent = 'Pagina ' + (current + 1) + ' di ' + TOTAL;
+
+  // Buttons
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === TOTAL - 1;
+
+  // Scroll to top
+  document.getElementById('content-area').scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Close sidebar on mobile
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
+});
+
+document.getElementById('btn-prev').addEventListener('click', () => goTo(current - 1));
+document.getElementById('btn-next').addEventListener('click', () => goTo(current + 1));
+
+document.getElementById('burger-btn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+});
+document.getElementById('overlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+});
+
+// Init
+goTo(0);
+</script>
+</body>
+</html>
