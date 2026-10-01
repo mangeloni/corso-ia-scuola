@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M1 – Panorama strumenti IA | Slide interattive</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#1A3560;--teal:#0D7C8F;--amber:#E8820C;--light:#EAF3F7;--gray:#F4F6F8;--white:#ffffff;--dark:#1E1E1E;--mid:#4A5568;--cap:#718096}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#0f1e35}
+.deck{width:100%;height:100vh;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .35s}
+.slide.active{display:flex;opacity:1}
+/* Nav */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(26,53,96,.92);backdrop-filter:blur(8px);display:flex;align-items:center;padding:.5rem 1.5rem;gap:1rem;z-index:100;height:48px}
+.nav-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .9rem;border-radius:6px;cursor:pointer;font-size:.82rem;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,.15)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.slide-counter{color:rgba(255,255,255,.6);font-size:.82rem;margin:0 auto}
+.progress-dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:300px}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s;cursor:pointer}
+.dot.done{background:rgba(255,255,255,.5)}
+.dot.current{background:var(--amber);transform:scale(1.3)}
+/* SLIDE TYPES */
+.s-cover{background:var(--navy);display:flex;flex-direction:row}
+.s-cover .left-panel{width:32%;background:var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+.s-cover .left-panel .icon{font-size:5rem;margin-bottom:1rem}
+.s-cover .right-panel{flex:1;padding:2.5rem 3rem;display:flex;flex-direction:column;justify-content:center}
+.s-cover .mod-badge{display:inline-block;background:var(--amber);color:#fff;font-size:.75rem;font-weight:700;padding:.3rem .9rem;border-radius:20px;letter-spacing:.08em;margin-bottom:1rem;align-self:flex-start}
+.s-cover h1{font-size:2.2rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:1.5rem}
+.s-cover .meta{font-size:.9rem;color:#A0C4D8;line-height:1.8}
+.s-content{background:var(--white);padding:0 0 48px}
+.s-content .top-bar{height:6px;background:var(--navy)}
+.s-content .accent-bar{width:5px;position:fixed;left:0;top:6px;bottom:48px;background:var(--amber)}
+.s-content .inner{padding:1.5rem 2rem 1rem 2.5rem;flex:1;overflow-y:auto}
+.s-content h2{font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+.s-content .subtitle{font-size:.9rem;color:var(--teal);font-style:italic;margin-bottom:1.25rem}
+.s-dark{background:var(--navy);padding:0 0 48px}
+.s-dark .top-bar{height:4px;background:var(--teal)}
+.s-dark .bot-bar{position:fixed;bottom:48px;left:0;right:0;height:4px;background:var(--amber)}
+.s-dark .inner{padding:1.5rem 2rem;flex:1;overflow-y:auto;color:#fff}
+.s-dark h2{font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:.25rem}
+.s-dark .subtitle{font-size:.9rem;color:var(--teal);font-style:italic;margin-bottom:1.25rem}
+/* Components */
+.info-box{background:var(--light);border-left:4px solid var(--teal);padding:.85rem 1rem;border-radius:0 8px 8px 0;margin:.75rem 0;font-size:.88rem;color:var(--dark);line-height:1.5}
+.info-box strong{color:var(--navy)}
+.warn-box{background:#FFF3E0;border-left:4px solid var(--amber);padding:.85rem 1rem;border-radius:0 8px 8px 0;margin:.75rem 0;font-size:.88rem;color:#7A4000;line-height:1.5}
+.card-grid{display:grid;gap:.75rem;margin:.75rem 0}
+.card-grid.cols-2{grid-template-columns:1fr 1fr}
+.card-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.card-grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.card{background:#fff;border:1px solid #DDE3EA;border-radius:8px;padding:.85rem;position:relative;overflow:hidden}
+.card .card-accent{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card .card-num{font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+.card h4{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:.35rem}
+.card p,.card li{font-size:.82rem;color:var(--mid);line-height:1.45}
+.level-col{background:var(--gray);border-radius:8px;overflow:hidden;flex:1}
+.level-col .level-hdr{padding:.65rem .85rem;font-size:.82rem;font-weight:700;color:#fff}
+.level-col .level-body{padding:.75rem .85rem}
+.level-col .level-body li{font-size:.8rem;color:var(--dark);margin-bottom:.35rem;padding-left:1rem;position:relative}
+.level-col .level-body li:before{content:"›";position:absolute;left:0;color:var(--teal);font-weight:700}
+.level-col .level-note{padding:.6rem .85rem;background:rgba(0,0,0,.05);font-size:.75rem;color:var(--mid);font-style:italic;line-height:1.4}
+.levels-row{display:flex;gap:.75rem;margin:.75rem 0}
+table.compare{width:100%;border-collapse:collapse;font-size:.82rem;margin:.75rem 0}
+table.compare th{background:var(--navy);color:#fff;padding:.5rem .65rem;text-align:left;font-weight:600}
+table.compare td{padding:.45rem .65rem;border-bottom:1px solid #EEF2F7;vertical-align:top}
+table.compare tr:nth-child(even) td{background:var(--gray)}
+table.compare .tag-yes{color:#2E7D32;font-weight:600}
+table.compare .tag-no{color:#C62828;font-weight:600}
+table.compare .tag-caut{color:var(--amber);font-weight:600}
+ul.plain-list{margin:.5rem 0;padding-left:1.2rem}
+ul.plain-list li{font-size:.88rem;color:var(--dark);margin-bottom:.4rem;line-height:1.45}
+ul.plain-list li span.label{font-weight:700;color:var(--navy)}
+.step-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:1rem;margin-bottom:.65rem}
+.step-box .step-num{font-size:1.1rem;font-weight:700;color:var(--amber);margin-bottom:.2rem}
+.step-box h4{font-size:.9rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.step-box p{font-size:.82rem;color:#A0C4D8;line-height:1.4}
+.takeaway-item{display:flex;align-items:flex-start;gap:.85rem;background:rgba(255,255,255,.06);border-radius:8px;padding:.85rem;margin-bottom:.6rem}
+.takeaway-item .ti-icon{font-size:1.5rem;color:var(--amber);min-width:28px;margin-top:.1rem}
+.takeaway-item .ti-title{font-size:.92rem;font-weight:700;color:var(--amber);margin-bottom:.2rem}
+.takeaway-item .ti-text{font-size:.82rem;color:#A0C4D8;line-height:1.4}
+.criteria-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem;margin:.75rem 0}
+.criterion{background:#fff;border:1px solid #DDE3EA;border-radius:8px;padding:.75rem;text-align:center}
+.criterion .c-num{width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;font-size:.9rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto .4rem}
+.criterion h4{font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.3rem}
+.criterion p{font-size:.76rem;color:var(--mid);line-height:1.35}
+.faq-row{display:flex;gap:0;border-bottom:1px solid #EEF2F7;padding:.65rem 0}
+.faq-q{width:42%;font-size:.85rem;font-weight:600;color:var(--navy);padding-right:.75rem;line-height:1.4}
+.faq-q span{color:var(--teal)}
+.faq-a{flex:1;font-size:.82rem;color:var(--mid);line-height:1.4}
+.faq-a span{color:var(--amber);font-weight:700}
+</style>
+</head>
+<body>
+<div class="deck" id="deck"></div>
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="go(-1)">← Indietro</button>
+  <div class="slide-counter" id="counter">1 / 20</div>
+  <div class="progress-dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="go(1)">Avanti →</button>
+</div>
+<script>
+const slides = [
+  // 1 - Cover
+  `<div class="slide s-cover">
+    <div class="left-panel"><div class="icon">🎓</div></div>
+    <div class="right-panel">
+      <span class="mod-badge">MODULO 1</span>
+      <h1>Panorama degli strumenti di Intelligenza Artificiale per l'educazione</h1>
+      <div class="meta">
+        Corso: Formare i formatori sull'IA nella scuola<br>
+        Durata modulo: 4 ore &nbsp;|&nbsp; Impianto: Train the Trainers<br>
+        Istituto Comprensivo – A.S. 2025/2026
+      </div>
+    </div>
+  </div>`,
+
+  // 2 - Obiettivi
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Obiettivi e struttura del modulo</h2>
+      <div class="subtitle">Cosa impareremo e come è organizzato M1</div>
+      <div class="info-box"><strong>Obiettivo formativo:</strong> orientare i futuri formatori nella comprensione delle principali categorie di strumenti IA e dei criteri di scelta responsabile nel contesto dell'istituto comprensivo.</div>
+      <div class="card-grid cols-4" style="margin-top:.85rem">
+        <div class="card"><div class="card-accent" style="background:#1A3560"></div><div class="card-num">01</div><h4>Panorama strumenti</h4><p>Categorie, funzioni e differenze tra i principali strumenti IA per l'educazione</p></div>
+        <div class="card"><div class="card-accent" style="background:#0D7C8F"></div><div class="card-num">02</div><h4>Tre livelli d'uso</h4><p>Uso docente, uso mediato, uso diretto: distinzioni operative per la scuola</p></div>
+        <div class="card"><div class="card-accent" style="background:#5B4A8A"></div><div class="card-num">03</div><h4>Criteri di scelta</h4><p>Come selezionare uno strumento: dati, età, privacy, limiti, controllo umano</p></div>
+        <div class="card"><div class="card-accent" style="background:#E8820C"></div><div class="card-num">04</div><h4>Focus Trainer</h4><p>Come spiegare ai colleghi differenze, funzioni e criteri in modo efficace</p></div>
+      </div>
+      <div style="background:var(--amber);border-radius:6px;padding:.6rem 1rem;margin-top:.85rem;font-size:.85rem;font-weight:600;color:#fff">🔬 Laboratorio: Costruzione della mappa comparativa degli strumenti IA per l'educazione</div>
+    </div>
+  </div>`,
+
+  // 3 - Perché l'IA nella scuola
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Perché parlare di IA nella scuola oggi?</h2>
+      <div class="subtitle">Contesto, obbligo normativo e opportunità educativa</div>
+      <div class="card-grid cols-1" style="gap:.65rem">
+        <div class="card" style="border-left:4px solid #2B5EA7;padding:.85rem 1rem"><div style="display:flex;gap:.75rem;align-items:flex-start"><div style="font-size:1.4rem">🤖</div><div><h4 style="color:#2B5EA7;margin-bottom:.3rem">L'IA è già presente</h4><p>Strumenti IA sono già utilizzati da docenti, studenti e famiglie, spesso senza consapevolezza delle implicazioni didattiche e normative.</p></div></div></div>
+        <div class="card" style="border-left:4px solid var(--navy);padding:.85rem 1rem"><div style="display:flex;gap:.75rem;align-items:flex-start"><div style="font-size:1.4rem">⚖️</div><div><h4 style="color:var(--navy);margin-bottom:.3rem">Un obbligo normativo</h4><p>L'art. 4 dell'AI Act (Reg. UE 2024/1689) introduce l'obbligo di AI literacy per chi utilizza sistemi IA in contesti organizzativi. La scuola non è esclusa.</p></div></div></div>
+        <div class="card" style="border-left:4px solid var(--amber);padding:.85rem 1rem"><div style="display:flex;gap:.75rem;align-items:flex-start"><div style="font-size:1.4rem">💡</div><div><h4 style="color:var(--amber);margin-bottom:.3rem">Un'opportunità professionale</h4><p>I docenti formati possono guidare l'adozione consapevole dell'IA, integrando strumenti nel curricolo in modo coerente e responsabile.</p></div></div></div>
+      </div>
+      <div class="info-box" style="margin-top:.65rem">Il corso forma figure di sistema che sapranno guidare i colleghi: non usi improvvisati, ma adozione <strong>consapevole e responsabile</strong>.</div>
+    </div>
+  </div>`,
+
+  // 4 - Quadro normativo
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Il quadro normativo essenziale</h2>
+      <div class="subtitle">Tre livelli: europeo, nazionale, istituzionale</div>
+      <div class="card-grid cols-2" style="gap:.65rem">
+        <div class="card"><div class="card-accent" style="background:#2B5EA7"></div><div style="font-size:.7rem;font-weight:700;color:#2B5EA7;letter-spacing:.06em;margin-bottom:.3rem">UNIONE EUROPEA</div><h4>AI Act – Reg. UE 2024/1689</h4><p>Art. 4: obbligo di AI literacy per deployer. La scuola che usa sistemi IA è un deployer e deve formare il personale.</p></div>
+        <div class="card"><div class="card-accent" style="background:var(--navy)"></div><div style="font-size:.7rem;font-weight:700;color:var(--navy);letter-spacing:.06em;margin-bottom:.3rem">ITALIA</div><h4>D.M. 166/2025 – Linee guida MIM</h4><p>Riferimento nazionale per l'adozione dell'IA nelle scuole: criteri di scelta, cautele d'uso, governance, formazione.</p></div>
+        <div class="card"><div class="card-accent" style="background:var(--teal)"></div><div style="font-size:.7rem;font-weight:700;color:var(--teal);letter-spacing:.06em;margin-bottom:.3rem">UNIONE EUROPEA</div><h4>GDPR – Reg. UE 2016/679</h4><p>Regola il trattamento dei dati personali. Critico per l'uso di piattaforme IA: dati alunni, account, caricamento documenti.</p></div>
+        <div class="card"><div class="card-accent" style="background:#5B4A8A"></div><div style="font-size:.7rem;font-weight:700;color:#5B4A8A;letter-spacing:.06em;margin-bottom:.3rem">INTERNAZIONALE</div><h4>UNESCO AI Competency Framework for Teachers</h4><p>Framework per la formazione docenti: mindset human-centred, etica, fondamenti IA, pedagogia, sviluppo professionale.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 5 - Deployer
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>La scuola come deployer: cosa significa?</h2>
+      <div class="subtitle">Una distinzione fondamentale dell'AI Act (art. 3)</div>
+      <div class="info-box"><strong>Deployer (art. 3 AI Act):</strong> qualsiasi persona fisica o giuridica, autorità pubblica, agenzia o altro organismo che utilizza un sistema di IA sotto la propria responsabilità.</div>
+      <div class="card-grid cols-3" style="margin-top:.75rem">
+        <div class="card"><div class="card-accent" style="background:var(--teal)"></div><h4 style="color:var(--teal)">Quando la scuola è deployer</h4><ul class="plain-list" style="padding-left:.9rem;margin-top:.3rem"><li>Usa ChatGPT per preparare materiali</li><li>Adotta una piattaforma IA per la valutazione</li><li>Integra strumenti adattivi nella didattica</li></ul></div>
+        <div class="card"><div class="card-accent" style="background:var(--navy)"></div><h4 style="color:var(--navy)">Cosa comporta</h4><ul class="plain-list" style="padding-left:.9rem;margin-top:.3rem"><li>Garantire AI literacy al personale (art. 4)</li><li>Valutare i rischi degli strumenti adottati</li><li>Rispettare il GDPR nel trattamento dati</li><li>Definire policy d'istituto sull'IA</li></ul></div>
+        <div class="card"><div class="card-accent" style="background:var(--amber)"></div><h4 style="color:var(--amber)">Cosa NON significa</h4><ul class="plain-list" style="padding-left:.9rem;margin-top:.3rem"><li>Vietare ogni uso dell'IA nella scuola</li><li>Rispondere degli errori dei sistemi IA in sé</li><li>Formare tutti i docenti allo stesso livello</li></ul></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 6 - Mappa categorie
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Le sei categorie di strumenti IA per l'educazione</h2>
+      <div class="subtitle">Una mappa di orientamento: funzione, esempi, uso didattico</div>
+      <div class="card-grid cols-3" style="gap:.6rem;margin-top:.5rem">
+        <div class="card"><div class="card-accent" style="background:#2B5EA7"></div><div style="font-size:.65rem;font-weight:700;color:#2B5EA7;letter-spacing:.06em">CATEGORIA 1</div><h4>Chatbot e assistenti IA</h4><p>ChatGPT, Gemini, Copilot</p></div>
+        <div class="card"><div class="card-accent" style="background:var(--teal)"></div><div style="font-size:.65rem;font-weight:700;color:var(--teal);letter-spacing:.06em">CATEGORIA 2</div><h4>Generatori di contenuti</h4><p>Canva Education, NotebookLM</p></div>
+        <div class="card"><div class="card-accent" style="background:#5B4A8A"></div><div style="font-size:.65rem;font-weight:700;color:#5B4A8A;letter-spacing:.06em">CATEGORIA 3</div><h4>Tutor intelligenti</h4><p>Khanmigo (Khan Academy), Duolingo Max</p></div>
+        <div class="card"><div class="card-accent" style="background:#2E7D32"></div><div style="font-size:.65rem;font-weight:700;color:#2E7D32;letter-spacing:.06em">CATEGORIA 4</div><h4>Strumenti adattivi</h4><p>DreamBox, Century Tech</p></div>
+        <div class="card"><div class="card-accent" style="background:var(--amber)"></div><div style="font-size:.65rem;font-weight:700;color:var(--amber);letter-spacing:.06em">CATEGORIA 5</div><h4>Quiz e valutazione formativa</h4><p>Quizizz, Wayground, Socrative</p></div>
+        <div class="card"><div class="card-accent" style="background:#B0003A"></div><div style="font-size:.65rem;font-weight:700;color:#B0003A;letter-spacing:.06em">CATEGORIA 6</div><h4>Strumenti per accessibilità</h4><p>Immersive Reader, Speechify</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 7 - ChatGPT Gemini Copilot
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Chatbot IA: ChatGPT, Gemini, Copilot</h2>
+      <div class="subtitle">La categoria più diffusa: come si distinguono per la scuola?</div>
+      <table class="compare">
+        <tr><th style="width:18%">Strumento</th><th>Punti di forza</th><th>Limitazioni</th><th style="width:30%">Per la scuola</th></tr>
+        <tr><td><strong style="color:#10A37F">ChatGPT</strong><br><span style="font-size:.75rem;color:var(--mid)">OpenAI</span></td><td>Ottima qualità testuale, GPT-4o multimodale, ampia versatilità</td><td>Dati a OpenAI, età min. 13 anni, versione gratuita limitata</td><td>Uso docente: eccellente. Uso alunni &lt;13: <span class="tag-no">vietato</span></td></tr>
+        <tr><td><strong style="color:#4285F4">Gemini</strong><br><span style="font-size:.75rem;color:var(--mid)">Google</span></td><td>Integrato con Google Workspace for Education, multimodale</td><td>Dati a Google, policy account minori da verificare</td><td>Workspace Education ha protezioni: <span class="tag-caut">verificare config.</span></td></tr>
+        <tr><td><strong style="color:#0078D4">Copilot</strong><br><span style="font-size:.75rem;color:var(--mid)">Microsoft</span></td><td>Integrato in M365 Education: Word, PowerPoint, Teams</td><td>Funzioni avanzate richiedono licenza M365</td><td>Copilot for Education con modalità sicura: <span class="tag-caut">configurare</span></td></tr>
+      </table>
+      <div class="warn-box"><strong>⚠ Regola generale:</strong> Per i chatbot generativi, preferire l'uso docente (Livello 1) o mediato (Livello 2). L'uso diretto da parte degli alunni del primo ciclo è quasi sempre inappropriato.</div>
+    </div>
+  </div>`,
+
+  // 8 - NotebookLM Canva
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Generatori di contenuti: NotebookLM e Canva Education</h2>
+      <div class="subtitle">Funzioni e possibilità didattiche a confronto</div>
+      <div class="card-grid cols-2" style="gap:.75rem;margin-top:.5rem">
+        <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden">
+          <div style="background:#1A73E8;padding:.6rem 1rem;font-size:.9rem;font-weight:700;color:#fff">NotebookLM (Google)</div>
+          <div style="padding:.85rem">
+            <p style="font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Cosa fa:</p><p style="font-size:.82rem;color:var(--mid);margin-bottom:.6rem">Analizza documenti caricati (PDF, testi, URL) e genera riepiloghi, domande, audio-podcast basandosi esclusivamente su quelle fonti.</p>
+            <p style="font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Punto di forza:</p><p style="font-size:.82rem;color:var(--mid);margin-bottom:.6rem">Risponde solo in base ai documenti caricati → meno allucinazioni. Cita le fonti.</p>
+            <p style="font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Limitazione critica:</p><p style="font-size:.82rem;color:var(--mid);margin-bottom:.6rem">Età minima de facto 18 anni. <strong style="color:#C62828">Solo uso docente.</strong></p>
+            <div class="warn-box" style="margin-top:0;font-size:.79rem">Non caricare documenti con dati personali degli alunni.</div>
+          </div>
+        </div>
+        <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden">
+          <div style="background:#7D2AE8;padding:.6rem 1rem;font-size:.9rem;font-weight:700;color:#fff">Canva Education</div>
+          <div style="padding:.85rem">
+            <p style="font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Cosa fa:</p><p style="font-size:.82rem;color:var(--mid);margin-bottom:.6rem">Crea presentazioni, infografiche, video e poster con componenti IA (generazione immagini, testo, suggerimenti di design).</p>
+            <p style="font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Uso con alunni:</p><p style="font-size:.82rem;color:var(--mid);margin-bottom:.6rem">Possibile con età minima 13 anni e account gestiti dall'istituto (non account personali di minori).</p>
+            <p style="font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Piano gratuito per istituti:</p><p style="font-size:.82rem;color:var(--mid)">Template avanzati, collaborazione in classe, nessuna pubblicità per gli istituti registrati.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`,
+
+  // 9 - Quiz valutazione
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Quiz e valutazione formativa: Quizizz, Wayground e altri</h2>
+      <div class="subtitle">Strumenti per generare domande, raccogliere dati, fornire feedback immediato</div>
+      <div class="card-grid cols-3" style="gap:.65rem">
+        <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden">
+          <div style="background:#8B2FC9;padding:.5rem .85rem;font-size:.9rem;font-weight:700;color:#fff">Quizizz</div>
+          <div style="padding:.75rem">
+            <ul class="plain-list" style="padding-left:.9rem"><li>Quiz gamificati con generazione IA di domande</li><li>Modalità lezione + quiz + homework</li><li>Report aggregati per il docente</li><li>Piano gratuito disponibile</li></ul>
+            <div class="warn-box" style="margin-top:.6rem;font-size:.78rem">Dati elaborati da Quizizz Inc. (USA). DPA da verificare.</div>
+          </div>
+        </div>
+        <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden">
+          <div style="background:var(--teal);padding:.5rem .85rem;font-size:.9rem;font-weight:700;color:#fff">Wayground</div>
+          <div style="padding:.75rem">
+            <ul class="plain-list" style="padding-left:.9rem"><li>Valutazione adattiva per matematica e scienze</li><li>Adatta domande al livello dell'alunno</li><li>Integrazione con Google Classroom</li><li>Report individualizzati</li></ul>
+            <div class="warn-box" style="margin-top:.6rem;font-size:.78rem">Verificare disponibilità per istituti italiani e conformità GDPR.</div>
+          </div>
+        </div>
+        <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden">
+          <div style="background:#5B4A8A;padding:.5rem .85rem;font-size:.9rem;font-weight:700;color:#fff">Altri strumenti</div>
+          <div style="padding:.75rem">
+            <ul class="plain-list" style="padding-left:.9rem"><li><span class="label">Mentimeter:</span> sondaggi in tempo reale</li><li><span class="label">Kahoot!:</span> quiz competitivi gamificati</li><li><span class="label">Edpuzzle:</span> video interattivi con quiz</li><li><span class="label">Socrative:</span> exit ticket e quiz rapidi</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`,
+
+  // 10 - Accessibilità
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Strumenti IA per l'accessibilità e il supporto ai BES</h2>
+      <div class="subtitle">Una categoria spesso sottovalutata, ma ad alto impatto nel primo ciclo</div>
+      <div class="info-box">Gli strumenti per l'accessibilità sono spesso i <strong>più facilmente adottabili nel primo ciclo</strong>: impatto positivo documentato per alunni con DSA, difficoltà linguistiche e BES. Molti non richiedono account personali degli alunni.</div>
+      <div class="card-grid cols-2" style="gap:.65rem;margin-top:.75rem">
+        <div class="card"><h4>Microsoft Immersive Reader</h4><p>Lettura immersiva con sintesi vocale, sillabazione, modalità focus. Integrato in Teams, OneNote, Word. Gratuito con M365 Education. <strong style="color:#2E7D32">Nessun account alunno aggiuntivo.</strong></p></div>
+        <div class="card"><h4>Speechify</h4><p>Sintesi vocale avanzata con voci realistiche. Trasforma testi scritti in audio ascoltabile. Utile per alunni con dislessia o difficoltà di lettura. Piano gratuito disponibile.</p></div>
+        <div class="card"><h4>Grammarly</h4><p>Supporto alla scrittura con correzione grammaticale e stilistica. Utile per alunni con difficoltà ortografiche. Disponibile come estensione browser.</p></div>
+        <div class="card"><h4>Otter.ai</h4><p>Trascrizione automatica di audio e video in testo. Utile per alunni con difficoltà uditive o di elaborazione. Integrazione con Google Meet e Zoom.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 11 - Tre livelli d'uso
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>I tre livelli d'uso dell'IA nella scuola</h2>
+      <div class="subtitle">Una distinzione operativa fondamentale per i formatori</div>
+      <div class="levels-row">
+        <div class="level-col"><div class="level-hdr" style="background:var(--navy)">1. Uso del docente<br><em style="font-weight:400;font-size:.75rem">Il formatore usa l'IA</em></div><div class="level-body"><ul><li>Preparare materiali, schede, rubriche</li><li>Generare bozze di lezioni</li><li>Creare domande per quiz</li><li>Sintetizzare testi, ricercare esempi</li></ul></div><div class="level-note">Nessun dato alunno. Minori rischi privacy. Totale controllo del docente.</div></div>
+        <div class="level-col"><div class="level-hdr" style="background:var(--teal)">2. Uso mediato<br><em style="font-weight:400;font-size:.75rem">Il docente guida l'interazione</em></div><div class="level-body"><ul><li>Docente mostra l'IA alla classe</li><li>Alunni osservano e discutono gli output</li><li>Attività critica collettiva</li><li>Nessun account alunno necessario</li></ul></div><div class="level-note">Ideale per il primo ciclo. Nessun dato personale inviato. Approccio critico.</div></div>
+        <div class="level-col"><div class="level-hdr" style="background:var(--amber)">3. Uso diretto<br><em style="font-weight:400;font-size:.75rem">L'alunno interagisce con l'IA</em></div><div class="level-body"><ul><li>Solo se rispettata l'età minima</li><li>Solo con policy d'istituto</li><li>Solo con account appropriati</li><li>Solo con supervisione docente</li></ul></div><div class="level-note">Nel primo ciclo: molto raro. Sempre con forti cautele. Richiede delibera DS.</div></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 12 - Età e privacy
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Età, account, privacy e policy d'istituto</h2>
+      <div class="subtitle">Le condizioni necessarie per un uso responsabile</div>
+      <div class="warn-box"><strong>⚠ Attenzione:</strong> Nel primo ciclo quasi tutti gli strumenti IA hanno età minima 13 anni (COPPA/GDPR). Alcuni richiedono 16 o 18 anni. Verificare sempre le condizioni d'uso prima di proporre uno strumento agli alunni.</div>
+      <table class="compare" style="margin-top:.65rem">
+        <tr><th>Domanda</th><th>Risposta operativa</th></tr>
+        <tr><td><strong>Qual è l'età minima?</strong></td><td>Leggere Terms of Service. ChatGPT: 13 anni. Molti: 13 o 16 anni. Alcuni: 18. Per minori di 13: <span class="tag-no">vietato</span> senza consenso verificato.</td></tr>
+        <tr><td><strong>Servono account personali degli alunni?</strong></td><td>Evitare account personali di minori. Preferire strumenti usabili senza login o con account istituzionali.</td></tr>
+        <tr><td><strong>Quali dati vengono inviati?</strong></td><td>Valutare: nome, dati scolastici, testi prodotti, risposte. <span class="tag-no">Mai</span> caricare dati sensibili (salute, disabilità, situazione familiare).</td></tr>
+        <tr><td><strong>C'è una policy d'istituto?</strong></td><td>Se sì: rispettarla. Se no: il formatore interno ha un ruolo chiave nel proporre linee guida operative al DS.</td></tr>
+        <tr><td><strong>Il trattamento è conforme al GDPR?</strong></td><td>Verificare: DPA disponibile, server UE o garanzie equivalenti, nomina come responsabile del trattamento.</td></tr>
+      </table>
+    </div>
+  </div>`,
+
+  // 13 - Criteri di scelta
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Come scegliere uno strumento IA?</h2>
+      <div class="subtitle">I sei criteri essenziali per una scelta responsabile</div>
+      <div class="criteria-grid">
+        <div class="criterion"><div class="c-num">1</div><h4>Funzione</h4><p>Cosa fa? È pertinente all'obiettivo didattico? Risolve un problema reale?</p></div>
+        <div class="criterion"><div class="c-num">2</div><h4>Destinatari</h4><p>Chi usa lo strumento? Docente, mediato o diretto alunni? Età minima?</p></div>
+        <div class="criterion"><div class="c-num">3</div><h4>Dati trattati</h4><p>Quali dati invia? Dove vengono elaborati? C'è un DPA?</p></div>
+        <div class="criterion"><div class="c-num">4</div><h4>Privacy / GDPR</h4><p>È conforme al GDPR? Server in UE? Garanzie per i minori?</p></div>
+        <div class="criterion"><div class="c-num">5</div><h4>Limiti e rischi</h4><p>Allucinazioni? Bias? Copyright? Dipendenza cognitiva?</p></div>
+        <div class="criterion"><div class="c-num">6</div><h4>Controllo umano</h4><p>Il docente mantiene il controllo sugli output? Può verificare?</p></div>
+      </div>
+      <div class="info-box" style="margin-top:.65rem">Regola fondamentale: <strong>nessun output IA deve essere usato senza verifica umana.</strong> Il controllo umano non è una formalità: è la differenza tra uso responsabile e delega impropria.</div>
+    </div>
+  </div>`,
+
+  // 14 - Bias e allucinazioni
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Limiti fondamentali: bias e allucinazioni</h2>
+      <div class="subtitle">Cosa i formatori devono saper spiegare ai colleghi</div>
+      <div class="card-grid cols-2" style="gap:.75rem">
+        <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden">
+          <div style="background:var(--amber);padding:.5rem 1rem;font-size:.9rem;font-weight:700;color:#fff">Bias algoritmici</div>
+          <div style="padding:.85rem">
+            <p style="font-size:.82rem;margin-bottom:.5rem"><strong style="color:var(--amber)">Cos'è:</strong> L'IA riflette i pregiudizi presenti nei dati di addestramento: stereotipi di genere, culturali, geografici, linguistici.</p>
+            <p style="font-size:.82rem;margin-bottom:.5rem"><strong style="color:var(--amber)">Esempio:</strong> Chiedere all'IA di descrivere "un buon medico" o "uno studente modello": gli output possono riflettere stereotipi di genere o culturali.</p>
+            <p style="font-size:.82rem"><strong style="color:var(--amber)">Come spiegarlo:</strong> Far produrre all'IA descrizioni di ruoli professionali e analizzare insieme i risultati: esercizio potente e memorabile.</p>
+          </div>
+        </div>
+        <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden">
+          <div style="background:#B0003A;padding:.5rem 1rem;font-size:.9rem;font-weight:700;color:#fff">Allucinazioni</div>
+          <div style="padding:.85rem">
+            <p style="font-size:.82rem;margin-bottom:.5rem"><strong style="color:#B0003A">Cos'è:</strong> L'IA genera informazioni false presentandole con la stessa sicurezza di quelle vere: date, nomi, citazioni, fonti inventate.</p>
+            <p style="font-size:.82rem;margin-bottom:.5rem"><strong style="color:#B0003A">Esempio:</strong> ChatGPT può citare articoli scientifici inesistenti con titolo, autore, rivista e DOI completamente inventati.</p>
+            <p style="font-size:.82rem"><strong style="color:#B0003A">Come spiegarlo:</strong> Chiedere all'IA di citare 5 fonti su un argomento, poi verificarle: almeno 2-3 saranno inesistenti o errate.</p>
+          </div>
+        </div>
+      </div>
+      <div class="warn-box">I bias non sono un difetto tecnico risolvibile: riflettono asimmetrie reali nei dati. <strong>Rileggere sempre criticamente gli output</strong> prima di usarli con gli alunni.</div>
+    </div>
+  </div>`,
+
+  // 15 - Scelta consapevole
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Da entusiasmo acritico a scelta consapevole</h2>
+      <div class="subtitle">Il posizionamento del formatore interno</div>
+      <div class="info-box">Il ruolo del formatore interno non è promuovere l'IA né sconsigliarla. È aiutare i colleghi a <strong>scegliere con criterio</strong>, usare con consapevolezza e valutare criticamente.</div>
+      <div class="card-grid cols-3" style="gap:.65rem;margin-top:.65rem">
+        <div class="card" style="border-top:3px solid #C62828"><h4 style="color:#C62828">❌ Entusiasmo acritico</h4><ul class="plain-list" style="padding-left:.9rem;margin-top:.3rem"><li>«L'IA rivoluzionerà tutto!»</li><li>Proporre strumenti senza verifiche</li><li>Ignorare limiti, rischi e GDPR</li><li>Usare output senza revisione</li></ul></div>
+        <div class="card" style="border-top:3px solid #6A1B9A"><h4 style="color:#6A1B9A">❌ Rifiuto generico</h4><ul class="plain-list" style="padding-left:.9rem;margin-top:.3rem"><li>«L'IA è solo per le aziende»</li><li>Bloccare ogni sperimentazione</li><li>Non formarsi sui cambiamenti</li><li>Lasciare i colleghi senza guida</li></ul></div>
+        <div class="card" style="border-top:3px solid #2E7D32;background:#F0FAF4"><h4 style="color:#2E7D32">✓ Scelta consapevole</h4><ul class="plain-list" style="padding-left:.9rem;margin-top:.3rem"><li>Analizzare funzione e limiti</li><li>Verificare GDPR e condizioni d'uso</li><li>Scegliere in base al contesto</li><li>Mantenere il controllo umano</li></ul></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 16 - Focus TTT
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Focus Train the Trainers: come spiegarlo ai colleghi</h2>
+      <div class="subtitle">Sei strategie comunicative per il formatore interno</div>
+      <div class="card-grid cols-2" style="gap:.6rem">
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>1. Parti dai bisogni reali</h4><p>Chiedi: «Che problema vuoi risolvere?». La rilevanza personale è il motore dell'apprendimento.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>2. Mostra, non descrivere</h4><p>Una demo live di 5 minuti vale più di 30 minuti di spiegazione. Mostra anche gli errori.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>3. Usa la mappa comparativa</h4><p>Lo strumento del laboratorio è il tuo principale alleato: visivo, rapido, aggiornabile.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>4. Anticipa le domande difficili</h4><p>«È legale? E la privacy?» Prepara risposte brevi, basate su fonti (AI Act, GDPR, DM 166/2025).</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>5. Normalizza il dubbio</h4><p>Non devi sapere tutto. Dì: «Verifico e ti rispondo». La trasparenza costruisce fiducia.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>6. Definisci confini operativi</h4><p>Cosa si può fare ADESSO: uso docente, uso mediato, e cosa richiede delibera del DS.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 17 - FAQ
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Domande frequenti dei docenti: come risponderle</h2>
+      <div class="subtitle">Le FAQ che il formatore interno incontrerà più spesso</div>
+      <div>
+        <div class="faq-row"><div class="faq-q"><span>D:</span> Posso usare ChatGPT per preparare le mie lezioni?</div><div class="faq-a"><span>R:</span> Sì, per uso personale del docente nella preparazione dei materiali. Evitare di caricare dati personali degli alunni. Verificare sempre gli output.</div></div>
+        <div class="faq-row"><div class="faq-q"><span>D:</span> Gli alunni possono usare l'IA per i compiti?</div><div class="faq-a"><span>R:</span> Dipende dalla policy d'istituto e dall'età. Nel primo ciclo: quasi sempre no per uso autonomo. Il docente decide come valutare il processo.</div></div>
+        <div class="faq-row"><div class="faq-q"><span>D:</span> L'IA sostituirà i docenti?</div><div class="faq-a"><span>R:</span> No. L'IA non ha le competenze relazionali, educative ed etiche del docente. La relazione educativa e il giudizio professionale restano umani.</div></div>
+        <div class="faq-row"><div class="faq-q"><span>D:</span> Come faccio a sapere se un alunno ha usato l'IA?</div><div class="faq-a"><span>R:</span> Non sempre è possibile. Meglio progettare attività che valorizzino il processo (orale, passaggi intermedi, riflessione) più che il solo prodotto finale.</div></div>
+        <div class="faq-row" style="border-bottom:none"><div class="faq-q"><span>D:</span> È obbligatorio usare l'IA nella didattica?</div><div class="faq-a"><span>R:</span> No. L'AI Act obbliga l'AI literacy, non l'uso. I docenti hanno piena libertà didattica e non sono obbligati a usare strumenti IA in classe.</div></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 18 - Laboratorio
+  `<div class="slide s-dark">
+    <div class="top-bar"></div><div class="bot-bar"></div>
+    <div class="inner">
+      <div style="font-size:.75rem;font-weight:700;color:var(--amber);letter-spacing:.1em;margin-bottom:.75rem">LABORATORIO M1</div>
+      <h2 style="font-size:1.5rem;margin-bottom:1.25rem">Costruzione della mappa comparativa degli strumenti IA</h2>
+      <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.88rem;color:#A0C4D8;font-style:italic">Obiettivo: costruire uno strumento riutilizzabile per orientare i colleghi nella scelta degli strumenti IA.</div>
+      <div class="card-grid cols-4" style="gap:.65rem">
+        <div class="step-box"><div class="step-num">01</div><h4>Scegliere 3 strumenti</h4><p>Ciascun partecipante o coppia sceglie 3 strumenti tra quelli presentati nel modulo (o propone alternative in uso nell'istituto).</p></div>
+        <div class="step-box"><div class="step-num">02</div><h4>Compilare le schede</h4><p>Per ogni strumento: funzione, uso didattico, destinatari, dati trattati, limiti, rischi, condizioni d'uso, età minima.</p></div>
+        <div class="step-box"><div class="step-num">03</div><h4>Confronto in plenaria</h4><p>Presentare i risultati. Identificare strumenti condivisi, divergenze e criteri su cui la scuola deve decidere.</p></div>
+        <div class="step-box"><div class="step-num">04</div><h4>Validare la mappa</h4><p>La mappa finale diventa parte del kit del formatore: uno strumento per orientare i colleghi dell'istituto.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 19 - Mappa prodotto
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Il prodotto di M1: la mappa comparativa</h2>
+      <div class="subtitle">Prima componente del kit del formatore interno</div>
+      <table class="compare" style="font-size:.78rem">
+        <tr><th>Strumento</th><th>Categoria</th><th>Uso didattico</th><th>Dati trattati</th><th>Età min.</th><th>I ciclo?</th></tr>
+        <tr><td><strong>ChatGPT</strong></td><td>Chatbot IA</td><td>Preparare materiali, bozze di lezioni, domande per quiz (uso docente)</td><td>Testo prompt, file caricati, dati account</td><td>13 anni</td><td class="tag-yes">Sì (docente)</td></tr>
+        <tr><td><strong>Quizizz</strong></td><td>Quiz/Valut.</td><td>Quiz formativi, exit ticket, homework gamificato</td><td>Risposte alunni, dati account</td><td>13 anni</td><td class="tag-caut">Con DPA</td></tr>
+        <tr><td><strong>NotebookLM</strong></td><td>Gen. contenuti</td><td>Analisi fonti, riepiloghi, domande da documenti</td><td>Documenti caricati, dati Google account</td><td>18 anni*</td><td class="tag-no">Solo docente</td></tr>
+        <tr><td><strong>Canva Edu</strong></td><td>Gen. contenuti</td><td>Presentazioni, infografiche, video, poster</td><td>Dati account, contenuti creati</td><td>13 anni</td><td class="tag-caut">Con autorizz.</td></tr>
+        <tr><td><em style="color:var(--cap)">[Strumento…]</em></td><td><em style="color:var(--cap)">[Categoria]</em></td><td><em style="color:var(--cap)">[Compilare nel laboratorio]</em></td><td><em style="color:var(--cap)">[Dati]</em></td><td><em style="color:var(--cap)">[Età]</em></td><td><em style="color:var(--cap)">[Valutare]</em></td></tr>
+      </table>
+      <div style="font-size:.76rem;color:var(--cap);font-style:italic;margin-top:.35rem">* NotebookLM richiede account Google. Le condizioni Workspace for Education possono variare.</div>
+    </div>
+  </div>`,
+
+  // 20 - Sintesi
+  `<div class="slide s-dark">
+    <div class="top-bar"></div><div class="bot-bar"></div>
+    <div class="inner">
+      <div style="font-size:.75rem;font-weight:700;color:var(--teal);letter-spacing:.1em;margin-bottom:.5rem">SINTESI DEL MODULO 1</div>
+      <h2 style="margin-bottom:1rem">Cosa portate a casa</h2>
+      <div class="takeaway-item"><div class="ti-icon">🗺️</div><div><div class="ti-title">Orientamento nel panorama</div><div class="ti-text">Sei categorie di strumenti IA, con funzioni, esempi, limiti e condizioni d'uso per l'educazione</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">⚖️</div><div><div class="ti-title">I tre livelli d'uso</div><div class="ti-text">Uso docente, uso mediato, uso diretto: distinzioni operative per l'istituto comprensivo</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">✓</div><div><div class="ti-title">Criteri di scelta responsabile</div><div class="ti-text">Sei criteri: funzione, destinatari, dati, privacy, limiti, controllo umano</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">📋</div><div><div class="ti-title">La mappa comparativa</div><div class="ti-text">Prima componente del Kit del formatore: strumento visivo e aggiornabile per orientare i colleghi</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">⚡</div><div><div class="ti-title">Il quadro normativo</div><div class="ti-text">AI Act art. 4, D.M. 166/2025, GDPR: tre pilastri che definiscono obblighi e responsabilità della scuola</div></div></div>
+    </div>
+  </div>`
+];
+
+let cur = 0;
+const deck = document.getElementById('deck');
+const dotsEl = document.getElementById('dots');
+
+// Build slides
+slides.forEach((html,i)=>{
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const sl = div.firstElementChild;
+  deck.appendChild(sl);
+});
+
+// Build dots
+slides.forEach((_,i)=>{
+  const d = document.createElement('div');
+  d.className='dot'+(i===0?' current':'');
+  d.onclick=()=>goTo(i);
+  dotsEl.appendChild(d);
+});
+
+function goTo(n){
+  const sls = deck.querySelectorAll('.slide');
+  const dts = dotsEl.querySelectorAll('.dot');
+  sls[cur].classList.remove('active');
+  dts[cur].classList.remove('current');
+  dts[cur].classList.add('done');
+  cur=n;
+  sls[cur].classList.add('active');
+  dts[cur].classList.remove('done');
+  dts[cur].classList.add('current');
+  document.getElementById('counter').textContent=(cur+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+}
+
+function go(d){if(cur+d>=0&&cur+d<slides.length)goTo(cur+d);}
+
+goTo(0);
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+});
+</script>
+</body>
+</html>

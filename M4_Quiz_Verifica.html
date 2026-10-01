@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz – M4 Limiti, rischi, AI Act e uso responsabile</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#EAF3F7;color:#1E1E1E;min-height:100vh;padding:2rem 1rem}
+.container{max-width:780px;margin:0 auto}
+.quiz-header{background:#1A3560;color:#fff;border-radius:12px;padding:2rem;margin-bottom:2rem;text-align:center}
+.quiz-header h1{font-size:1.45rem;font-weight:700;margin-bottom:.5rem;line-height:1.3}
+.meta{font-size:.9rem;color:#A0C4D8;margin-top:.5rem}
+.badge{display:inline-block;background:#E8820C;color:#fff;font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.05em;margin-bottom:.75rem}
+.progress-bar{background:#1E3A5F;border-radius:8px;height:6px;margin-bottom:2rem;overflow:hidden}
+.progress-fill{background:#E8820C;height:100%;border-radius:8px;transition:width .4s ease}
+.question-card{background:#fff;border-radius:12px;border:1px solid #DDE3EA;padding:2rem;margin-bottom:1.5rem;display:none}
+.question-card.active{display:block}
+.question-number{font-size:.8rem;font-weight:600;color:#0D7C8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.question-text{font-size:1.05rem;font-weight:600;color:#1A3560;line-height:1.5;margin-bottom:1.5rem}
+.options{display:flex;flex-direction:column;gap:.75rem}
+.option{cursor:pointer;padding:1rem 1.25rem;border:2px solid #E2E8F0;border-radius:8px;font-size:.93rem;color:#1E1E1E;transition:all .2s;display:flex;align-items:flex-start;gap:.75rem;background:#fff}
+.option:hover:not(.disabled){border-color:#0D7C8F;background:#EAF3F7}
+.option.correct{border-color:#2E7D32;background:#F0FAF4;color:#1B5E20}
+.option.wrong{border-color:#C62828;background:#FFEBEE;color:#B71C1C}
+.option.disabled{cursor:default}
+.option-letter{width:24px;height:24px;min-width:24px;border-radius:50%;background:#EAF3F7;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#1A3560;margin-top:.1rem}
+.option.correct .option-letter{background:#2E7D32;color:#fff}
+.option.wrong .option-letter{background:#C62828;color:#fff}
+.feedback{margin-top:1.25rem;padding:1rem 1.25rem;border-radius:8px;font-size:.88rem;line-height:1.55;display:none}
+.feedback.correct-fb{background:#F0FAF4;border-left:4px solid #2E7D32;color:#1B5E20}
+.feedback.wrong-fb{background:#FFEBEE;border-left:4px solid #C62828;color:#7F1D1D}
+.feedback.show{display:block}
+.nav-buttons{display:flex;justify-content:flex-end;margin-top:1.5rem}
+.btn-next{background:#1A3560;color:#fff;padding:.6rem 1.5rem;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;border:none}
+.btn-next:hover{background:#0D2040}
+.btn-next:disabled{background:#B0BEC5;cursor:default}
+.results{display:none;background:#fff;border-radius:12px;padding:2.5rem;text-align:center;border:1px solid #DDE3EA}
+.results.show{display:block}
+.score-circle{width:120px;height:120px;border-radius:50%;margin:0 auto 1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff}
+.sc-excellent{background:#2E7D32}.sc-good{background:#0D7C8F}.sc-pass{background:#E8820C}.sc-fail{background:#C62828}
+.score-label{font-size:.65rem;font-weight:400;letter-spacing:.05em}
+.result-title{font-size:1.4rem;font-weight:700;color:#1A3560;margin-bottom:.5rem}
+.result-desc{color:#4A5568;font-size:.95rem;margin-bottom:2rem;line-height:1.6}
+.result-detail{text-align:left;border:1px solid #DDE3EA;border-radius:8px;overflow:hidden;margin-bottom:1.5rem}
+.rd-row{display:flex;padding:.6rem 1rem;font-size:.88rem;border-bottom:1px solid #EEF2F7}
+.rd-row:last-child{border-bottom:none}
+.rd-row.ok{background:#F0FAF4}.rd-row.ko{background:#FFEBEE}
+.btn-restart{background:#1A3560;color:#fff;padding:.75rem 2rem;font-size:1rem;border-radius:8px;border:none;cursor:pointer;font-weight:600;margin-top:.5rem}
+.btn-restart:hover{background:#0D2040}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="quiz-header">
+    <div class="badge">MODULO 4</div>
+    <h1>Quiz di verifica – Limiti, rischi, AI Act e uso responsabile dell'IA nella scuola</h1>
+    <div class="meta">10 domande a risposta multipla &nbsp;|&nbsp; Corso: Formare i formatori sull'IA nella scuola</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+  <div id="qa"></div>
+  <div class="results" id="results">
+    <div id="sc" class="score-circle"></div>
+    <div class="result-title" id="rt"></div>
+    <div class="result-desc" id="rd"></div>
+    <div class="result-detail" id="rdtl"></div>
+    <button class="btn-restart" onclick="restart()">Ricomincia il quiz</button>
+  </div>
+</div>
+<script>
+const qs = [
+  {
+    q:"Dal 2 febbraio 2025, l'articolo 4 dell'AI Act richiede ai deployer di:",
+    opts:["Registrare ogni sistema IA adottato nel registro europeo","Garantire livelli adeguati di AI literacy al personale che usa o gestisce sistemi IA","Ottenere certificazione CE per ogni strumento IA prima dell'adozione","Sottoscrivere un'assicurazione per i rischi derivanti dall'uso dell'IA"],
+    c:1,
+    fb:"Corretto. L'art. 4 AI Act (applicabile dal 2 febbraio 2025, ai sensi dell'art. 113) obbliga deployer e provider a garantire un livello sufficiente di AI literacy al personale. Non richiede registrazione (quella è per sistemi ad alto rischio, dal 2026), né certificazione né assicurazione."
+  },
+  {
+    q:"Secondo l'AI Act (Allegato III), l'uso di un sistema IA per ammettere o valutare automaticamente gli studenti rientra in quale categoria di rischio?",
+    opts:["Rischio minimo","Rischio limitato","Rischio alto","Rischio inaccettabile (vietato)"],
+    c:2,
+    fb:"Corretto. L'Allegato III dell'AI Act, punto 3b, classifica come ALTO RISCHIO i sistemi IA per ammissioni o assegnazioni agli istituti di istruzione, nonché per valutare i risultati degli studenti. Questi sistemi, dal 2026, richiedono registrazione, valutazione d'impatto e supervisione umana obbligatoria."
+  },
+  {
+    q:"Un docente usa ChatGPT per preparare materiali didattici senza coinvolgere gli alunni. Quale categoria di rischio AI Act si applica?",
+    opts:["Alto rischio, perché coinvolge l'istruzione","Rischio inaccettabile, perché non c'è supervisione","Rischio minimo o nullo, salvo l'obbligo di AI literacy (art. 4) già in vigore","Rischio limitato, con obbligo di trasparenza verso gli alunni"],
+    c:2,
+    fb:"Corretto. L'uso del docente per preparare materiali (Livello 1) è rischio minimo: non automatizza decisioni rilevanti, non coinvolge dati degli alunni, il docente mantiene il pieno controllo. L'unico obbligo è l'AI literacy (art. 4, già in vigore). L'art. 50 (trasparenza chatbot) e gli obblighi ad alto rischio si applicano in scenari diversi."
+  },
+  {
+    q:"Un'allucinazione in un sistema IA generativo è:",
+    opts:["Un errore tecnico che causa il blocco del sistema","Un output falso presentato con la stessa sicurezza di un output vero, a causa del funzionamento statistico dell'LLM","Un bias di genere nei dati di addestramento","Una risposta rifiutata dal sistema per contenuto inappropriato"],
+    c:1,
+    fb:"Corretto. L'allucinazione è un output falso (citazioni inesistenti, fatti errati, leggi inventate) presentato dal modello con la stessa fluidità e sicurezza delle informazioni vere. Non è un bug corregibile: è una caratteristica strutturale dei modelli LLM, che predicono la parola più probabile senza verificare i fatti."
+  },
+  {
+    q:"Un docente nota che un output IA descrive sistematicamente le figure dirigenziali al maschile. Di quale fenomeno si tratta?",
+    opts:["Allucinazione semantica","Bias algoritmico di genere","Problema di copyright","Errore di trasparenza"],
+    c:1,
+    fb:"Corretto. Si tratta di bias algoritmico di genere: il modello ha appreso associazioni stereotipate tra generi e ruoli professionali dai testi su cui è stato addestrato. Non è un'allucinazione (le informazioni non sono false in senso fattuale), ma una distorsione sistematica che riflette le asimmetrie di genere presenti nei dati."
+  },
+  {
+    q:"In Italia, l'età minima per il consenso al trattamento dei dati personali per servizi digitali è:",
+    opts:["16 anni (soglia GDPR europea)","13 anni (soglia COPPA statunitense, applicata da molti provider)","14 anni (art. 2-quinquies D.Lgs. 101/2018, adattamento italiano del GDPR)","18 anni (maggiore età civile)"],
+    c:2,
+    fb:"Corretto. In Italia la soglia è 14 anni, stabilita dall'art. 2-quinquies del D.Lgs. 196/2003 (Codice Privacy), introdotto dal D.Lgs. 101/2018 che ha adeguato la normativa italiana al GDPR. La soglia GDPR europea è 16 anni, ma il regolamento consente agli Stati membri di abbassarla fino a 13. I termini d'uso USA (13 anni/COPPA) non sostituiscono la norma italiana."
+  },
+  {
+    q:"Un docente inserisce nel prompt il nome e la diagnosi di DSA di un alunno per ottenere materiali personalizzati. Qual è il problema principale?",
+    opts:["Il prompt è troppo lungo e riduce la qualità dell'output","Viola il principio di minimizzazione (art. 5 GDPR): dati sensibili di un minore inviati a server esterno senza necessità","Non si possono inserire bisogni educativi nei prompt","Il provider non è in grado di elaborare diagnosi cliniche"],
+    c:1,
+    fb:"Corretto. La diagnosi DSA è un dato sensibile (art. 9 GDPR). Inserirla in un prompt significa inviarla a server esterni, violando il principio di minimizzazione: si inserisce solo il necessario. La formulazione corretta è generica: «un alunno con dislessia certificata». PDP e PEI non si caricano mai su piattaforme esterne."
+  },
+  {
+    q:"L'articolo 50 dell'AI Act (applicabile dal 2026) prevede che:",
+    opts:["Tutti gli strumenti IA debbano essere certificati prima dell'uso","Chi usa un chatbot IA in interazione con persone fisiche deve informarle che stanno interagendo con un'IA","I deployer devono registrare ogni interazione con sistemi IA","I sistemi IA che usano i dati degli alunni debbano essere vietati"],
+    c:1,
+    fb:"Corretto. L'art. 50 AI Act prevede obblighi di trasparenza: chi mette in funzione un chatbot che interagisce con persone fisiche deve informarle dell'interazione con un'IA, salvo che l'utente lo sappia già. Dal 2026 i contenuti generati da IA (testi, immagini, audio) dovranno anche essere etichettati come tali."
+  },
+  {
+    q:"Un docente usa un output IA per preparare una lezione senza averlo riletto. Quale principio fondamentale viene violato?",
+    opts:["Il principio di trasparenza verso gli alunni","Il principio di controllo umano: nessun output IA deve essere usato senza revisione","Il principio di minimizzazione dei dati","Il principio di non discriminazione algoritmica"],
+    c:1,
+    fb:"Corretto. Il controllo umano è il principio fondamentale che governa ogni uso responsabile dell'IA (AI Act; UNESCO; OCSE). Usare output non revisionato viola questo principio e, nel caso di materiali con errori o bias distribuiti agli alunni, espone il docente a responsabilità professionali. Il controllo umano è anche ciò che rende l'uso dell'IA giuridicamente difendibile."
+  },
+  {
+    q:"Di fronte a un collega che vuole usare un sistema IA per decidere chi deve andare al recupero (selezionando automaticamente gli alunni), la risposta corretta del formatore interno è:",
+    opts:["Verificare che il sistema abbia un DPA prima di procedere","Permetterlo se il docente si riserva di confermare le scelte dell'IA","Rifiutare: far decidere all'IA chi ha bisogno di recupero è una delega impropria della decisione professionale e, se automatizzata, potenzialmente alto rischio","Permetterlo solo per la secondaria di I grado, non per la primaria"],
+    c:2,
+    fb:"Corretto. Delegare all'IA la selezione degli alunni da avviare al recupero è una delega impropria su due livelli: professionale (la valutazione e le decisioni conseguenti competono al docente) e normativo (se il sistema automatizza la selezione, potrebbe rientrare nell'alto rischio AI Act, Allegato III). L'IA può preparare materiali di recupero; non può decidere a chi destinarli."
+  }
+];
+
+let cur=0, score=0, answered={};
+
+function build(){
+  const area=document.getElementById('qa');
+  area.innerHTML='';
+  qs.forEach((q,i)=>{
+    const card=document.createElement('div');
+    card.className='question-card'+(i===0?' active':'');
+    card.id='q'+i;
+    const L=['A','B','C','D'];
+    card.innerHTML=`<div class="question-number">Domanda ${i+1} di ${qs.length}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options">${q.opts.map((o,j)=>`<div class="option" onclick="pick(${i},${j})" id="opt${i}_${j}"><div class="option-letter">${L[j]}</div><div>${o}</div></div>`).join('')}</div>
+      <div class="feedback" id="fb${i}"></div>
+      <div class="nav-buttons"><button class="btn-next" id="nx${i}" onclick="next(${i})" disabled>${i<qs.length-1?'Prossima →':'Risultati →'}</button></div>`;
+    area.appendChild(card);
+  });
+  upd();
+}
+
+function pick(qi,ai){
+  if(qi in answered) return;
+  answered[qi]=ai;
+  const q=qs[qi]; const ok=ai===q.c;
+  if(ok) score++;
+  q.opts.forEach((_,j)=>{
+    const el=document.getElementById(`opt${qi}_${j}`);
+    el.classList.add('disabled');
+    if(j===q.c) el.classList.add('correct');
+    else if(j===ai&&!ok) el.classList.add('wrong');
+  });
+  const fb=document.getElementById(`fb${qi}`);
+  fb.textContent=q.fb;
+  fb.className=`feedback show ${ok?'correct-fb':'wrong-fb'}`;
+  document.getElementById(`nx${qi}`).disabled=false;
+}
+
+function next(qi){
+  document.getElementById('q'+qi).classList.remove('active');
+  if(qi<qs.length-1){document.getElementById('q'+(qi+1)).classList.add('active');cur=qi+1;upd();}
+  else showResults();
+}
+
+function upd(){document.getElementById('pf').style.width=(cur/qs.length*100)+'%';}
+
+function showResults(){
+  document.getElementById('qa').style.display='none';
+  document.getElementById('pf').style.width='100%';
+  const res=document.getElementById('results');
+  res.classList.add('show');
+  const pct=Math.round(score/qs.length*100);
+  const sc=document.getElementById('sc');
+  sc.innerHTML=`${score}/${qs.length}<div class="score-label">PUNTI</div>`;
+  let cls,t,d;
+  if(pct>=90){cls='sc-excellent';t='Eccellente!';d='Padroneggi il quadro normativo e i principi operativi di M4. Sei pronto per guidare discussioni critiche nell\'istituto con solidità e autorevolezza.';}
+  else if(pct>=70){cls='sc-good';t='Buon risultato!';d='Comprendi bene i concetti chiave. Rivedi le domande sbagliate, in particolare quelle su classificazione dei rischi e privacy: sono i punti su cui i colleghi ti interrogheranno di più.';}
+  else if(pct>=50){cls='sc-pass';t='Sufficiente';d='Hai raggiunto la soglia. Rileggi la dispensa, in particolare le sezioni 2 (AI Act), 4 (classificazione rischi) e 10 (privacy): sono il cuore del modulo.';}
+  else{cls='sc-fail';t='Da rivedere';d='Rivedi la dispensa di M4 prima di procedere. Priorità: date AI Act, classificazione rischi, età 14 anni in Italia, allucinazioni, controllo umano.';}
+  sc.className='score-circle '+cls;
+  document.getElementById('rt').textContent=t;
+  document.getElementById('rd').textContent=d;
+  document.getElementById('rdtl').innerHTML=qs.map((q,i)=>{
+    const ok=answered[i]===q.c;
+    return `<div class="rd-row ${ok?'ok':'ko'}"><span style="margin-right:.75rem">${ok?'✓':'✗'}</span><span><strong>D${i+1}:</strong> ${q.q.substring(0,65)}…</span></div>`;
+  }).join('');
+}
+
+function restart(){cur=0;score=0;answered={};document.getElementById('results').classList.remove('show');document.getElementById('qa').style.display='';build();}
+build();
+</script>
+</body>
+</html>

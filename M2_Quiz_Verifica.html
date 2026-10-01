@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz di verifica – M2 Prompting didattico</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#EAF3F7;color:#1E1E1E;min-height:100vh;padding:2rem 1rem}
+.container{max-width:780px;margin:0 auto}
+.quiz-header{background:#1A3560;color:#fff;border-radius:12px;padding:2rem;margin-bottom:2rem;text-align:center}
+.quiz-header h1{font-size:1.5rem;font-weight:700;margin-bottom:.4rem}
+.quiz-header .meta{font-size:.88rem;color:#A0C4D8;margin-top:.4rem}
+.badge{display:inline-block;background:#E8820C;color:#fff;font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.05em;margin-bottom:.7rem}
+.progress-bar{background:#1E3A5F;border-radius:8px;height:6px;margin-bottom:2rem;overflow:hidden}
+.progress-fill{background:#E8820C;height:100%;border-radius:8px;transition:width .4s ease}
+.question-card{background:#fff;border-radius:12px;border:1px solid #DDE3EA;padding:2rem;margin-bottom:1.5rem;display:none}
+.question-card.active{display:block}
+.question-number{font-size:.8rem;font-weight:600;color:#0D7C8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.question-text{font-size:1.05rem;font-weight:600;color:#1A3560;line-height:1.5;margin-bottom:.75rem}
+.question-hint{font-size:.85rem;color:#718096;margin-bottom:1.25rem;font-style:italic}
+.options{display:flex;flex-direction:column;gap:.65rem}
+.option{cursor:pointer;padding:.9rem 1.1rem;border:2px solid #E2E8F0;border-radius:8px;font-size:.93rem;color:#1E1E1E;transition:all .2s;display:flex;align-items:flex-start;gap:.7rem;background:#fff}
+.option:hover:not(.disabled){border-color:#0D7C8F;background:#EAF3F7}
+.option.correct{border-color:#2E7D32;background:#F0FAF4}
+.option.wrong{border-color:#C62828;background:#FFEBEE}
+.option.disabled{cursor:default}
+.option-letter{width:26px;height:26px;min-width:26px;border-radius:50%;background:#EAF3F7;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#1A3560;margin-top:.1rem}
+.option.correct .option-letter{background:#2E7D32;color:#fff}
+.option.wrong .option-letter{background:#C62828;color:#fff}
+.feedback{margin-top:1.1rem;padding:.9rem 1.1rem;border-radius:8px;font-size:.88rem;line-height:1.5;display:none}
+.feedback.correct-fb{background:#F0FAF4;border-left:4px solid #2E7D32;color:#1B5E20}
+.feedback.wrong-fb{background:#FFEBEE;border-left:4px solid #C62828;color:#7F1D1D}
+.feedback.show{display:block}
+.code-example{background:#F8F9FA;border:1px solid #DDE3EA;border-radius:6px;padding:.65rem .85rem;font-family:'Courier New',monospace;font-size:.82rem;color:#1E1E1E;margin:.4rem 0 .8rem;line-height:1.5}
+.nav-buttons{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.25rem}
+.btn{padding:.6rem 1.4rem;border-radius:8px;font-size:.93rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-next{background:#1A3560;color:#fff}
+.btn-next:hover{background:#0D2040}
+.btn-next:disabled{background:#B0BEC5;cursor:default}
+.results{display:none;background:#fff;border-radius:12px;padding:2.5rem;text-align:center;border:1px solid #DDE3EA}
+.results.show{display:block}
+.score-circle{width:120px;height:120px;border-radius:50%;margin:0 auto 1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff}
+.score-circle.excellent{background:#2E7D32}.score-circle.good{background:#0D7C8F}
+.score-circle.pass{background:#E8820C}.score-circle.fail{background:#C62828}
+.score-label{font-size:.65rem;font-weight:400;letter-spacing:.05em}
+.result-title{font-size:1.4rem;font-weight:700;color:#1A3560;margin-bottom:.5rem}
+.result-desc{color:#4A5568;font-size:.93rem;margin-bottom:2rem;line-height:1.6}
+.result-detail{text-align:left;border:1px solid #DDE3EA;border-radius:8px;overflow:hidden;margin-bottom:1.5rem}
+.result-row{display:flex;align-items:flex-start;padding:.6rem .9rem;font-size:.88rem;border-bottom:1px solid #EEF2F7;gap:.75rem}
+.result-row:last-child{border-bottom:none}
+.result-row.ok{background:#F0FAF4}.result-row.no{background:#FFEBEE}
+.result-icon{min-width:20px;font-size:1rem}
+.btn-restart{background:#1A3560;color:#fff;padding:.75rem 2rem;font-size:1rem;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+.btn-restart:hover{background:#0D2040}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="quiz-header">
+    <div class="badge">MODULO 2</div>
+    <h1>Quiz di verifica – Prompting didattico strutturato</h1>
+    <div class="meta">10 domande a risposta multipla &nbsp;|&nbsp; Corso: Formare i formatori sull'IA nella scuola</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+  <div id="qa"></div>
+  <div class="results" id="results">
+    <div id="sc" class="score-circle"></div>
+    <div class="result-title" id="rt"></div>
+    <div class="result-desc" id="rd"></div>
+    <div class="result-detail" id="rdl"></div>
+    <button class="btn-restart" onclick="restart()">Ricomincia</button>
+  </div>
+</div>
+<script>
+const Q=[
+  {
+    q:"Qual è la definizione più corretta di 'prompt' nel contesto dei chatbot IA?",
+    hint:"",
+    opts:["Una query di ricerca inviata a un motore di ricerca","Un'istruzione strutturata fornita all'IA per ottenere un output specifico","Un codice di programmazione per configurare un chatbot","Un documento di policy sull'uso dell'IA in azienda"],
+    c:1,
+    fb:"Corretto. Il prompt è l'istruzione che l'utente fornisce al sistema IA generativo per ottenere un output. Non è una semplice query di ricerca, ma una specifica di progettazione che orienta qualità, formato e registro dell'output."
+  },
+  {
+    q:"Nel framework R-D-C-V, cosa rappresenta la 'D'?",
+    hint:"",
+    opts:["Dati: i dati forniti all'IA per l'elaborazione","Digitale: il formato digitale dell'output richiesto","Destinatari: le persone per cui il materiale è progettato","Disciplina: la materia scolastica di riferimento"],
+    c:2,
+    fb:"Corretto. Nel framework R-D-C-V, la D indica i Destinatari: chi sono le persone per cui si sta progettando il materiale (età, livello, profilo della classe, eventuali BES). È uno degli elementi più spesso omessi dai docenti, ma tra i più importanti per calibrare l'output."
+  },
+  {
+    q:"Quale prompt è strutturato correttamente con il framework R-D-C-V?",
+    hint:"Cerca quello che specifica ruolo, destinatari, compito e vincoli.",
+    opts:[
+      '"Scrivi una lezione di storia"',
+      '"Sei un docente di storia per la secondaria di I grado. Crea una simulazione di 20 minuti sulla vita medievale per una classe II (13 anni, 24 alunni). Include 4 ruoli: mercante, cavaliere, contadino, monaco. Usa un linguaggio accessibile."',
+      '"Fai una simulazione medievale con personaggi"',
+      '"Puoi aiutarmi con una lezione interattiva sulla storia medievale per i miei alunni?"'
+    ],
+    c:1,
+    fb:"Corretto. La risposta B contiene tutti gli elementi del framework R-D-C-V: Ruolo (docente di storia per la secondaria), Destinatari (classe II, 13 anni, 24 alunni), Compito (simulazione di 20 min, 4 ruoli specificati), Vincoli (linguaggio accessibile). Gli altri prompt mancano di uno o più elementi."
+  },
+  {
+    q:"Cos'è il 'few-shot prompting'?",
+    hint:"",
+    opts:[
+      "Una tecnica per ridurre la lunghezza del prompt",
+      "Un prompting con pochi vincoli per lasciare libertà all'IA",
+      "Una tecnica che fornisce all'IA 1-3 esempi del risultato atteso dentro il prompt",
+      "Un prompting riservato a pochi utenti esperti"
+    ],
+    c:2,
+    fb:"Corretto. Il few-shot prompting consiste nel fornire da 1 a 3 esempi del risultato atteso direttamente nel prompt. L'IA si calibra sullo stile, il formato e il registro degli esempi. Il termine 'few' si riferisce al numero di esempi (pochi), in opposizione a 'zero-shot' (senza esempi)."
+  },
+  {
+    q:"Quale dei seguenti è un prompt iterativo correttamente usato?",
+    hint:"Il prompt iterativo affina un output già ricevuto.",
+    opts:[
+      "Un prompt scritto in modo iterativo, cioè ripetendo le stesse parole per enfasi",
+      "Un secondo prompt che modifica e migliora l'output del primo prompt",
+      "Un prompt che chiede all'IA di ripetere la risposta più volte",
+      "Un prompt automatizzato che si esegue in ciclo senza intervento umano"
+    ],
+    c:1,
+    fb:"Corretto. Il prompt iterativo è un secondo prompt (o successivo) che usa l'output precedente come base per un affinamento. Ad esempio: primo prompt → output generico → secondo prompt 'Rielabora il punto 3 con linguaggio adatto a 10-11 anni e aggiungi un esempio concreto'. L'iterazione è normale nel prompting professionale."
+  },
+  {
+    q:"Un docente di scienze vuole chiedere a ChatGPT di creare domande per una verifica su un tema. Quale vincolo didattico è più importante includere nel prompt?",
+    hint:"",
+    opts:[
+      "Il nome della piattaforma chatbot che sta usando",
+      "Il livello scolastico, la classe e il tipo di domande desiderate",
+      "La propria email per ricevere le domande",
+      "Il numero di ore settimanali della materia"
+    ],
+    c:1,
+    fb:"Corretto. I vincoli didattici fondamentali sono: livello (classe, età), tipo di domande (chiuse, aperte, miste), obiettivo di valutazione, eventuale profilo BES della classe. Il nome della piattaforma, l'email e le ore settimanali non sono rilevanti per la qualità dell'output."
+  },
+  {
+    q:"Cosa significa 'prompt di ragionamento guidato' nel contesto della formazione dei docenti?",
+    hint:"",
+    opts:[
+      "Un prompt in cui l'IA prende decisioni al posto del docente",
+      "Un prompt che chiede all'IA di ragionare ad alta voce senza mostrare la risposta",
+      "Un prompt che chiede all'IA di esplicitare passaggi logici e criteri, affinché il docente possa verificarli",
+      "Un prompt in cui il docente guida l'IA verso una risposta già conosciuta"
+    ],
+    c:2,
+    fb:"Corretto. Il prompt di ragionamento guidato non delega il pensiero all'IA: chiede all'IA di rendere visibile il proprio processo (criteri usati, passaggi logici, controlli effettuati), così che il docente possa verificarli e intervenire dove necessario. È l'opposto della delega opaca ('fai tu la rubrica')."
+  },
+  {
+    q:"Qual è il primo passo da fare prima di usare un output IA in classe?",
+    hint:"",
+    opts:[
+      "Copiare e incollare l'output direttamente nel documento della lezione",
+      "Chiedere all'IA di verificare da sola la correttezza del proprio output",
+      "Applicare una checklist di revisione: correttezza, adeguatezza, bias, fonti, format, curricolo",
+      "Pubblicare il link nella sezione materiali di Google Classroom per condividerlo con i colleghi"
+    ],
+    c:2,
+    fb:"Corretto. Nessun output IA entra in classe senza revisione umana. La checklist di revisione include: correttezza disciplinare, adeguatezza del linguaggio, bias, verificabilità delle fonti, formato utilizzabile, coerenza con il prompt, privacy, coerenza con il curricolo. Il docente è sempre responsabile di ciò che porta agli alunni."
+  },
+  {
+    q:"Come si struttura una scheda della prompt library?",
+    hint:"",
+    opts:[
+      "Solo il testo del prompt, senza altri metadati",
+      "ID, disciplina, ordine, tipo, livello, prompt completo, output di riferimento, validatore e data",
+      "Nome del chatbot usato, versione del modello, data di creazione",
+      "Il prompt + il nome del docente che lo ha scritto"
+    ],
+    c:1,
+    fb:"Corretto. Una scheda della prompt library deve contenere: ID classificabile (es. IT-P3-LEZ-01), disciplina, ordine scolastico, tipo di prompt, livello/classe, prompt completo, output di riferimento, eventuali limitazioni note, e il nome di chi ha validato + la data. Questa struttura permette di aggiornare la library e di condividerla tra colleghi."
+  },
+  {
+    q:"Come può il formatore interno insegnare il prompting ai colleghi nel modo più efficace?",
+    hint:"Scegli la strategia didatticamente più potente.",
+    opts:[
+      "Distribuire un documento PDF con tutti i tipi di prompt da memorizzare",
+      "Spiegare verbalmente la teoria del prompting per 30 minuti, poi aprire domande",
+      "Mostrare dal vivo il confronto tra prompt debole e prompt strutturato sullo stesso obiettivo, poi far costruire un prompt ai colleghi sulla propria disciplina",
+      "Consegnare ai colleghi una prompt library già pronta senza spiegazioni"
+    ],
+    c:2,
+    fb:"Corretto. La strategia più efficace combina tre elementi: (1) mostrare il confronto dal vivo (il confronto visivo diretto è più potente di qualsiasi spiegazione), (2) far costruire subito un prompt sulla propria disciplina (il fare consolida la comprensione), (3) includere almeno un ciclo di affinamento iterativo. Distribuire PDF o prompt pre-confezionati senza pratica non produce apprendimento duraturo."
+  }
+];
+
+let cur=0,score=0,answered=[];
+const letters=['A','B','C','D'];
+
+function build(){
+  const area=document.getElementById('qa');
+  area.innerHTML='';
+  Q.forEach((q,i)=>{
+    const card=document.createElement('div');
+    card.className='question-card'+(i===0?' active':'');
+    card.id='q'+i;
+    card.innerHTML=`
+      <div class="question-number">Domanda ${i+1} di ${Q.length}</div>
+      <div class="question-text">${q.q}</div>
+      ${q.hint?`<div class="question-hint">💡 ${q.hint}</div>`:''}
+      <div class="options" id="opts${i}">
+        ${q.opts.map((o,j)=>`<div class="option" onclick="sel(${i},${j})" id="opt${i}_${j}">
+          <div class="option-letter">${letters[j]}</div><div>${o}</div>
+        </div>`).join('')}
+      </div>
+      <div class="feedback" id="fb${i}"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-next" id="nxt${i}" onclick="next(${i})" disabled>
+          ${i<Q.length-1?'Prossima domanda →':'Vedi risultati →'}
+        </button>
+      </div>`;
+    area.appendChild(card);
+  });
+  upd();
+}
+
+function sel(qi,ai){
+  if(answered.includes(qi))return;
+  answered.push(ai); // store answer index at position qi
+  const q=Q[qi];
+  const ok=ai===q.c;
+  if(ok)score++;
+  q.opts.forEach((_,j)=>{
+    const el=document.getElementById(`opt${qi}_${j}`);
+    el.classList.add('disabled');
+    if(j===q.c)el.classList.add('correct');
+    else if(j===ai&&!ok)el.classList.add('wrong');
+  });
+  const fb=document.getElementById(`fb${qi}`);
+  fb.textContent=q.fb;
+  fb.className=`feedback show ${ok?'correct-fb':'wrong-fb'}`;
+  document.getElementById(`nxt${qi}`).disabled=false;
+}
+
+function next(qi){
+  document.getElementById('q'+qi).classList.remove('active');
+  if(qi<Q.length-1){document.getElementById('q'+(qi+1)).classList.add('active');cur=qi+1;upd();}
+  else showRes();
+}
+
+function upd(){document.getElementById('pf').style.width=(cur/Q.length*100)+'%';}
+
+function showRes(){
+  document.getElementById('qa').style.display='none';
+  document.getElementById('pf').style.width='100%';
+  const res=document.getElementById('results');res.classList.add('show');
+  const pct=Math.round(score/Q.length*100);
+  const sc=document.getElementById('sc');
+  sc.innerHTML=`${score}/${Q.length}<div class="score-label">PUNTI</div>`;
+  let cls,t,d;
+  if(pct>=90){cls='excellent';t='Eccellente!';d='Padroneggi il prompting strutturato. Sei pronto per insegnare queste competenze ai tuoi colleghi con sicurezza e concretezza.';}
+  else if(pct>=70){cls='good';t='Buon risultato!';d='Hai compreso i concetti fondamentali del prompting didattico. Rivedere le domande errate ti darà una base ancora più solida per la formazione dei colleghi.';}
+  else if(pct>=50){cls='pass';t='Sufficiente';d='Hai raggiunto la soglia. Ti consigliamo di rivedere la dispensa, in particolare le sezioni sul framework R-D-C-V, il prompting iterativo e la checklist di revisione.';}
+  else{cls='fail';t='Da rivedere';d='Riprendi la dispensa di M2 prima di procedere. Concentrati su: framework R-D-C-V, tipologie di prompt, checklist di revisione, struttura della prompt library.';}
+  sc.className=`score-circle ${cls}`;
+  document.getElementById('rt').textContent=t;
+  document.getElementById('rd').textContent=d;
+  const det=document.getElementById('rdl');
+  det.innerHTML=Q.map((q,i)=>{
+    const ua=answered[i];
+    const ok=typeof ua==='number'?ua===q.c:false;
+    return `<div class="result-row ${ok?'ok':'no'}">
+      <span class="result-icon">${ok?'✓':'✗'}</span>
+      <span style="flex:1;font-size:.88rem"><strong>D${i+1}:</strong> ${q.q.substring(0,65)}…</span>
+    </div>`;
+  }).join('');
+}
+
+// Fix: track answers properly
+let userAnswers=[];
+function sel2(qi,ai){
+  if(userAnswers[qi]!==undefined)return;
+  userAnswers[qi]=ai;
+  const q=Q[qi];
+  const ok=ai===q.c;
+  if(ok)score++;
+  q.opts.forEach((_,j)=>{
+    const el=document.getElementById(`opt${qi}_${j}`);
+    el.classList.add('disabled');
+    if(j===q.c)el.classList.add('correct');
+    else if(j===ai&&!ok)el.classList.add('wrong');
+  });
+  const fb=document.getElementById(`fb${qi}`);
+  fb.textContent=q.fb;
+  fb.className=`feedback show ${ok?'correct-fb':'wrong-fb'}`;
+  document.getElementById(`nxt${qi}`).disabled=false;
+}
+
+function restart(){
+  cur=0;score=0;answered=[];userAnswers=[];
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('qa').style.display='';
+  build();
+}
+
+// Override sel with sel2
+window.sel=sel2;
+
+function showRes2(){
+  document.getElementById('qa').style.display='none';
+  document.getElementById('pf').style.width='100%';
+  const res=document.getElementById('results');res.classList.add('show');
+  const pct=Math.round(score/Q.length*100);
+  const sc=document.getElementById('sc');
+  sc.innerHTML=`${score}/${Q.length}<div class="score-label">PUNTI</div>`;
+  let cls,t,d;
+  if(pct>=90){cls='excellent';t='Eccellente!';d='Padroneggi il prompting strutturato. Sei pronto per insegnare queste competenze ai tuoi colleghi con sicurezza e concretezza.';}
+  else if(pct>=70){cls='good';t='Buon risultato!';d='Hai compreso i concetti fondamentali del prompting didattico. Rivedere le domande errate ti darà una base ancora più solida per la formazione dei colleghi.';}
+  else if(pct>=50){cls='pass';t='Sufficiente';d='Hai raggiunto la soglia. Rivedere la dispensa, in particolare le sezioni su R-D-C-V, prompt iterativo e checklist di revisione.';}
+  else{cls='fail';t='Da rivedere';d='Riprendi la dispensa di M2. Concentrati su: framework R-D-C-V, tipologie di prompt, checklist di revisione, struttura della prompt library.';}
+  sc.className=`score-circle ${cls}`;
+  document.getElementById('rt').textContent=t;
+  document.getElementById('rd').textContent=d;
+  const det=document.getElementById('rdl');
+  det.innerHTML=Q.map((q,i)=>{
+    const ok=userAnswers[i]===q.c;
+    return `<div class="result-row ${ok?'ok':'no'}">
+      <span class="result-icon">${ok?'✓':'✗'}</span>
+      <span style="flex:1;font-size:.88rem"><strong>D${i+1}:</strong> ${q.q.substring(0,65)}…</span>
+    </div>`;
+  }).join('');
+}
+window.next=function(qi){
+  document.getElementById('q'+qi).classList.remove('active');
+  if(qi<Q.length-1){document.getElementById('q'+(qi+1)).classList.add('active');cur=qi+1;upd();}
+  else showRes2();
+};
+
+build();
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')document.getElementById(`nxt${cur}`)?.click();
+});
+</script>
+</body>
+</html>

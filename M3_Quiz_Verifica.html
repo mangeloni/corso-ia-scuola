@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz di verifica – M3 Valutazione formativa con IA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#EAF3F7;color:#1E1E1E;min-height:100vh;padding:2rem 1rem}
+.container{max-width:780px;margin:0 auto}
+.quiz-header{background:#1A3560;color:#fff;border-radius:12px;padding:2rem;margin-bottom:2rem;text-align:center}
+.quiz-header h1{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+.quiz-header .meta{font-size:.9rem;color:#A0C4D8;margin-top:.5rem}
+.badge{display:inline-block;background:#E8820C;color:#fff;font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.05em;margin-bottom:.75rem}
+.progress-bar{background:#1E3A5F;border-radius:8px;height:6px;margin-bottom:2rem;overflow:hidden}
+.progress-fill{background:#E8820C;height:100%;border-radius:8px;transition:width .4s ease}
+.question-card{background:#fff;border-radius:12px;border:1px solid #DDE3EA;padding:2rem;margin-bottom:1.5rem;display:none}
+.question-card.active{display:block}
+.question-number{font-size:.8rem;font-weight:600;color:#0D7C8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.question-text{font-size:1.1rem;font-weight:600;color:#1A3560;line-height:1.5;margin-bottom:1.5rem}
+.options{display:flex;flex-direction:column;gap:.75rem}
+.option{cursor:pointer;padding:1rem 1.25rem;border:2px solid #E2E8F0;border-radius:8px;font-size:.95rem;color:#1E1E1E;transition:all .2s;display:flex;align-items:flex-start;gap:.75rem;background:#fff}
+.option:hover:not(.disabled){border-color:#0D7C8F;background:#EAF3F7}
+.option.correct{border-color:#2E7D32;background:#F0FAF4;color:#1B5E20}
+.option.wrong{border-color:#C62828;background:#FFEBEE;color:#B71C1C}
+.option.disabled{cursor:default}
+.option-letter{width:24px;height:24px;min-width:24px;border-radius:50%;background:#EAF3F7;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#1A3560;margin-top:.1rem}
+.option.correct .option-letter{background:#2E7D32;color:#fff}
+.option.wrong .option-letter{background:#C62828;color:#fff}
+.feedback{margin-top:1.25rem;padding:1rem 1.25rem;border-radius:8px;font-size:.9rem;line-height:1.5;display:none}
+.feedback.correct-fb{background:#F0FAF4;border-left:4px solid #2E7D32;color:#1B5E20}
+.feedback.wrong-fb{background:#FFEBEE;border-left:4px solid #C62828;color:#7F1D1D}
+.feedback.show{display:block}
+.nav-buttons{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem}
+.btn{padding:.6rem 1.5rem;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-next{background:#1A3560;color:#fff}
+.btn-next:hover{background:#0D2040}
+.btn-next:disabled{background:#B0BEC5;cursor:default}
+.results{display:none;background:#fff;border-radius:12px;padding:2.5rem;text-align:center;border:1px solid #DDE3EA}
+.results.show{display:block}
+.score-circle{width:120px;height:120px;border-radius:50%;margin:0 auto 1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff}
+.score-circle.excellent{background:#2E7D32}
+.score-circle.good{background:#0D7C8F}
+.score-circle.pass{background:#E8820C}
+.score-circle.fail{background:#C62828}
+.score-label{font-size:.65rem;font-weight:400;letter-spacing:.05em}
+.result-title{font-size:1.4rem;font-weight:700;color:#1A3560;margin-bottom:.5rem}
+.result-desc{color:#4A5568;font-size:.95rem;margin-bottom:2rem;line-height:1.6}
+.result-detail{text-align:left;border:1px solid #DDE3EA;border-radius:8px;overflow:hidden;margin-bottom:1.5rem}
+.result-detail-row{display:flex;padding:.65rem 1rem;font-size:.9rem;border-bottom:1px solid #EEF2F7}
+.result-detail-row:last-child{border-bottom:none}
+.result-detail-row.correct-row{background:#F0FAF4}
+.result-detail-row.wrong-row{background:#FFEBEE}
+.result-icon{width:20px;margin-right:.75rem;font-size:1rem}
+.btn-restart{background:#1A3560;color:#fff;padding:.75rem 2rem;font-size:1rem;border-radius:8px;border:none;cursor:pointer;font-weight:600;margin-top:.5rem}
+.btn-restart:hover{background:#0D2040}
+@media(max-width:600px){body{padding:1rem .5rem}.quiz-header{padding:1.5rem 1rem}.question-card{padding:1.5rem 1rem}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="quiz-header">
+    <div class="badge">MODULO 3</div>
+    <h1>Quiz di verifica – IA per valutazione formativa, feedback e personalizzazione</h1>
+    <div class="meta">10 domande a risposta multipla &nbsp;|&nbsp; Corso: Formare i formatori sull'IA nella scuola</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div id="quizArea"></div>
+  <div class="results" id="results">
+    <div id="scoreCircle" class="score-circle"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-desc" id="resultDesc"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <button class="btn-restart" onclick="restartQuiz()">Ricomincia il quiz</button>
+  </div>
+</div>
+<script>
+const questions = [
+  {
+    q: "Secondo il D.lgs. 62/2017, la responsabilità della valutazione degli apprendimenti nel primo ciclo spetta:",
+    opts: [
+      "Alla piattaforma o allo strumento adottato dall'istituto",
+      "Ai docenti, nell'esercizio della propria autonomia professionale",
+      "Alle famiglie, in collaborazione con il consiglio di classe",
+      "Al dirigente scolastico in quanto titolare del trattamento"
+    ],
+    correct: 1,
+    feedback: "Corretto. Il D.lgs. 62/2017 (art. 1) attribuisce la valutazione ai docenti, come espressione dell'autonomia professionale e della funzione docente. Nessuno strumento, IA inclusa, può sostituirsi a questa responsabilità: è il fondamento normativo del confine tra supporto e delega."
+  },
+  {
+    q: "L'O.M. 3 del 9 gennaio 2025 ha introdotto nella scuola primaria:",
+    opts: [
+      "I livelli descrittivi di apprendimento (avanzato, intermedio, base, in via di prima acquisizione)",
+      "Il voto numerico in decimi per tutte le discipline",
+      "I giudizi sintetici da Ottimo a Non sufficiente, con descrizione dei livelli raggiunti",
+      "L'obbligo di usare rubriche digitali per la valutazione in itinere"
+    ],
+    correct: 2,
+    feedback: "Corretto. L'O.M. 3/2025 (attuativa della Legge 150/2024) ha introdotto i giudizi sintetici (Ottimo, Distinto, Buono, Discreto, Sufficiente, Non sufficiente) accompagnati dalla descrizione dei livelli di apprendimento, sostituendo i livelli descrittivi dell'O.M. 172/2020 a partire dall'ultimo periodo dell'a.s. 2024/25."
+  },
+  {
+    q: "Quale delle seguenti pratiche costituisce una DELEGA IMPROPRIA della valutazione all'IA?",
+    opts: [
+      "Generare una bozza di rubrica che il docente rivede e adatta alla classe",
+      "Far assegnare all'IA i giudizi per il documento di valutazione",
+      "Creare domande diagnostiche da validare prima dell'uso",
+      "Chiedere all'IA formulazioni alternative di un feedback già deciso dal docente"
+    ],
+    correct: 1,
+    feedback: "Corretto. Far assegnare voti o giudizi all'IA è delega impropria: la valutazione è un atto professionale del docente (D.lgs. 62/2017). Le altre tre opzioni sono usi legittimi di supporto, perché il docente mantiene la decisione e la revisione finale."
+  },
+  {
+    q: "Un docente vuole usare l'IA per 'correggere' i temi della classe caricandoli con nome e cognome. Qual è la risposta corretta del formatore interno?",
+    opts: [
+      "È possibile, purché il docente riveda le correzioni prima di restituirle",
+      "È possibile solo con il consenso scritto delle famiglie",
+      "Non va fatto: gli elaborati con dati identificativi non si caricano; si può lavorare su testi anonimizzati e il giudizio resta al docente",
+      "È possibile se l'istituto ha firmato un DPA con il provider"
+    ],
+    correct: 2,
+    feedback: "Corretto. Il problema è doppio: privacy (dati identificativi degli alunni inviati a server esterni) e delega valutativa. Anche con DPA o consenso, caricare elaborati nominativi viola la minimizzazione (art. 5 GDPR). La pratica corretta: anonimizzare i testi, usare l'IA per proposte di feedback, e mantenere giudizio e restituzione in capo al docente."
+  },
+  {
+    q: "Quale caratteristica rende un feedback realmente FORMATIVO?",
+    opts: [
+      "Comunica il voto in modo chiaro e tempestivo",
+      "Indica cosa funziona, cosa migliorare e il passo successivo concreto",
+      "Confronta la prestazione dell'alunno con quella dei compagni",
+      "È generato automaticamente subito dopo la consegna"
+    ],
+    correct: 1,
+    feedback: "Corretto. Il feedback formativo guarda avanti: riconosce i punti di forza, identifica margini di miglioramento e indica il passo successivo praticabile. Non è un giudizio sintetico né una classifica. L'IA può aiutare a formulare feedback con questa struttura, ma la personalizzazione sul singolo alunno resta al docente."
+  },
+  {
+    q: "Cos'è un exit ticket?",
+    opts: [
+      "Un test sommativo di fine quadrimestre con voto",
+      "Una breve verifica a fine lezione (2-3 domande) per rilevare cosa è stato compreso",
+      "Un'autorizzazione all'uscita anticipata gestita dal registro elettronico",
+      "Una scheda di autovalutazione compilata a casa dalle famiglie"
+    ],
+    correct: 1,
+    feedback: "Corretto. L'exit ticket è uno strumento di valutazione formativa: poche domande rapide a fine lezione che danno al docente un'istantanea della comprensione della classe, utile per calibrare la lezione successiva. L'IA è molto efficace nel generarne varianti per livello e disciplina."
+  },
+  {
+    q: "Per differenziare materiali per un alunno con DSA usando l'IA, la pratica corretta è:",
+    opts: [
+      "Caricare il PDP dell'alunno per far adattare i materiali in automatico",
+      "Descrivere il bisogno in forma generica ('un alunno con dislessia certificata') senza dati identificativi",
+      "Inserire nome e diagnosi per ottenere materiali più precisi",
+      "Evitare del tutto l'IA: la differenziazione non può essere supportata da strumenti"
+    ],
+    correct: 1,
+    feedback: "Corretto. La differenziazione con IA è uno degli usi più produttivi (testi semplificati, font leggibili, supporti visivi), ma si fa descrivendo il bisogno in forma generica. PDP, PEI e diagnosi sono documenti riservati con dati sensibili (art. 9 GDPR): non vanno mai caricati su piattaforme esterne."
+  },
+  {
+    q: "I dati di valutazione degli alunni (voti, giudizi, report delle piattaforme) sono:",
+    opts: [
+      "Dati pubblici, perché comunicati alle famiglie tramite registro elettronico",
+      "Dati personali che richiedono protezione: profilano il percorso dell'alunno e non vanno inseriti nei prompt",
+      "Dati anonimi per definizione, perché espressi in forma numerica o sintetica",
+      "Dati liberamente trattabili dal docente in quanto autore della valutazione"
+    ],
+    correct: 1,
+    feedback: "Corretto. I dati di valutazione profilano il percorso di apprendimento di un minore e sono dati personali a tutti gli effetti. Inserirli nei prompt con elementi identificativi (nome, classe, scuola) significa comunicarli a terzi. Per analisi di pattern della classe: solo dati aggregati e anonimi."
+  },
+  {
+    q: "Un collega chiede: 'Posso usare l'IA come secondo valutatore nei casi dubbi?'. La risposta corretta del formatore è:",
+    opts: [
+      "Sì, è una buona pratica di triangolazione valutativa",
+      "No: l'IA non è un valutatore. Nei casi dubbi il confronto è con i colleghi del team o del dipartimento",
+      "Sì, ma solo per le prove oggettive a risposta chiusa",
+      "Sì, purché l'IA veda l'elaborato senza conoscere il nome dell'alunno"
+    ],
+    correct: 1,
+    feedback: "Corretto. L'idea dell'IA come 'secondo valutatore' è una delega mascherata: attribuisce all'IA un'autorità valutativa che non le compete e di cui non può rispondere. Il confronto professionale nei casi dubbi si fa con i colleghi. L'IA può semmai aiutare a esplicitare criteri prima della correzione."
+  },
+  {
+    q: "Nel modello di accompagnamento del formatore interno, di fronte a un collega che vuole 'far fare tutto all'IA', la prima mossa efficace è:",
+    opts: [
+      "Spiegare i rischi normativi e sanzionatori della delega valutativa",
+      "Partire dal bisogno reale del collega (tempo, fatica, incertezza) e mostrare un uso di supporto che lo risolve davvero",
+      "Vietare l'uso dell'IA per la valutazione finché non avrà completato la formazione",
+      "Rimandare la questione al dirigente scolastico"
+    ],
+    correct: 1,
+    feedback: "Corretto. La richiesta di 'far fare tutto all'IA' nasce quasi sempre da un bisogno reale (carico di lavoro, fatica nella formulazione dei giudizi). Il formatore efficace parte da quel bisogno e mostra come l'IA può alleggerirlo legittimamente (bozze, varianti, strutture) mantenendo il controllo professionale. La norma si introduce dopo, come cornice, non come barriera d'ingresso."
+  }
+];
+
+let current = 0, score = 0, answered = [], userAnswers = {};
+
+function buildQuiz() {
+  const area = document.getElementById('quizArea');
+  area.innerHTML = '';
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'question-card' + (i === 0 ? ' active' : '');
+    card.id = 'q' + i;
+    const letters = ['A','B','C','D'];
+    card.innerHTML = `
+      <div class="question-number">Domanda ${i+1} di ${questions.length}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options" id="opts${i}">
+        ${q.opts.map((o,j) => `<div class="option" onclick="selectAnswer(${i},${j})" id="opt${i}_${j}">
+          <div class="option-letter">${letters[j]}</div><div>${o}</div>
+        </div>`).join('')}
+      </div>
+      <div class="feedback" id="fb${i}"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-next" id="next${i}" onclick="nextQuestion(${i})" disabled>
+          ${i < questions.length-1 ? 'Prossima domanda →' : 'Vedi risultati →'}
+        </button>
+      </div>`;
+    area.appendChild(card);
+  });
+  updateProgress();
+}
+
+function selectAnswer(qi, ai) {
+  if (answered.includes(qi)) return;
+  answered.push(qi);
+  userAnswers[qi] = ai;
+  const q = questions[qi];
+  const isCorrect = ai === q.correct;
+  if (isCorrect) score++;
+  q.opts.forEach((_, j) => {
+    const opt = document.getElementById(`opt${qi}_${j}`);
+    opt.classList.add('disabled');
+    if (j === q.correct) opt.classList.add('correct');
+    else if (j === ai && !isCorrect) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById(`fb${qi}`);
+  fb.textContent = q.feedback;
+  fb.className = `feedback show ${isCorrect ? 'correct-fb' : 'wrong-fb'}`;
+  document.getElementById(`next${qi}`).disabled = false;
+}
+
+function nextQuestion(qi) {
+  document.getElementById('q'+qi).classList.remove('active');
+  if (qi < questions.length - 1) {
+    document.getElementById('q'+(qi+1)).classList.add('active');
+    current = qi + 1;
+    updateProgress();
+  } else {
+    showResults();
+  }
+}
+
+function updateProgress() {
+  const pct = ((current) / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function showResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('progressFill').style.width = '100%';
+  const results = document.getElementById('results');
+  results.classList.add('show');
+  const pct = Math.round((score / questions.length) * 100);
+  const circle = document.getElementById('scoreCircle');
+  circle.innerHTML = `${score}/${questions.length}<div class="score-label">PUNTI</div>`;
+  let cls, title, desc;
+  if (pct >= 90) { cls='excellent'; title='Eccellente!'; desc='Padroneggi il confine tra supporto e delega e le condizioni normative della valutazione con IA. Sei pronto per accompagnare i colleghi su questo terreno delicato.'; }
+  else if (pct >= 70) { cls='good'; title='Buon risultato!'; desc='Hai compreso i concetti chiave del modulo. Rivedi le domande sbagliate, in particolare quelle su privacy e delega impropria: sono i punti su cui i colleghi ti chiederanno di più.'; }
+  else if (pct >= 50) { cls='pass'; title='Sufficiente'; desc='Hai raggiunto la sufficienza. Ti consigliamo di rivedere la dispensa, in particolare le sezioni sul confine supporto/delega e sulla privacy dei dati di valutazione.'; }
+  else { cls='fail'; title='Da rivedere'; desc='Rivedi la dispensa del Modulo 3 prima di procedere. Concentrati su: D.lgs. 62/2017 e O.M. 3/2025, supporto vs delega, privacy dei dati di valutazione, modello di accompagnamento.'; }
+  circle.className = `score-circle ${cls}`;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultDesc').textContent = desc;
+  const detail = document.getElementById('resultDetail');
+  detail.innerHTML = questions.map((q, i) => {
+    const isRight = userAnswers[i] === q.correct;
+    return `<div class="result-detail-row ${isRight ? 'correct-row' : 'wrong-row'}">
+      <span class="result-icon">${isRight ? '✓' : '✗'}</span>
+      <span style="flex:1;font-size:.88rem"><strong>D${i+1}:</strong> ${q.q.substring(0,70)}…</span>
+    </div>`;
+  }).join('');
+}
+
+function restartQuiz() {
+  current = 0; score = 0; answered = []; userAnswers = {};
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('quizArea').style.display = '';
+  buildQuiz();
+}
+
+buildQuiz();
+</script>
+</body>
+</html>

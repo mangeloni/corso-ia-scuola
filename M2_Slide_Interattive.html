@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M2 – Progettazione didattica con IA e prompting | Slide interattive</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#1A3560;--teal:#0D7C8F;--amber:#E8820C;--light:#EAF3F7;--gray:#F4F6F8;--white:#ffffff;--dark:#1E1E1E;--mid:#4A5568;--cap:#718096}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#0f1e35}
+.deck{width:100%;height:100vh;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .35s}
+.slide.active{display:flex;opacity:1}
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(26,53,96,.92);backdrop-filter:blur(8px);display:flex;align-items:center;padding:.5rem 1.5rem;gap:1rem;z-index:100;height:48px}
+.nav-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .9rem;border-radius:6px;cursor:pointer;font-size:.82rem;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,.15)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.slide-counter{color:rgba(255,255,255,.6);font-size:.82rem;margin:0 auto}
+.progress-dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:300px}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s;cursor:pointer}
+.dot.done{background:rgba(255,255,255,.5)}
+.dot.current{background:var(--amber);transform:scale(1.3)}
+.s-cover{background:var(--navy);display:flex;flex-direction:row}
+.s-cover .left-panel{width:32%;background:var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+.s-cover .left-panel .icon{font-size:5rem;margin-bottom:1rem}
+.s-cover .right-panel{flex:1;padding:2.5rem 3rem;display:flex;flex-direction:column;justify-content:center}
+.s-cover .mod-badge{display:inline-block;background:var(--amber);color:#fff;font-size:.75rem;font-weight:700;padding:.3rem .9rem;border-radius:20px;letter-spacing:.08em;margin-bottom:1rem;align-self:flex-start}
+.s-cover h1{font-size:2.2rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:1.5rem}
+.s-cover .meta{font-size:.9rem;color:#A0C4D8;line-height:1.8}
+.s-content{background:var(--white);padding:0 0 48px}
+.s-content .top-bar{height:6px;background:var(--navy)}
+.s-content .accent-bar{width:5px;position:fixed;left:0;top:6px;bottom:48px;background:var(--amber)}
+.s-content .inner{padding:1.4rem 2rem 1rem 2.5rem;flex:1;overflow-y:auto}
+.s-content h2{font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+.s-content .subtitle{font-size:.9rem;color:var(--teal);font-style:italic;margin-bottom:1.1rem}
+.s-dark{background:var(--navy);padding:0 0 48px}
+.s-dark .top-bar{height:4px;background:var(--teal)}
+.s-dark .bot-bar{position:fixed;bottom:48px;left:0;right:0;height:4px;background:var(--amber)}
+.s-dark .inner{padding:1.5rem 2rem;flex:1;overflow-y:auto;color:#fff}
+.s-dark h2{font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:.25rem}
+.info-box{background:var(--light);border-left:4px solid var(--teal);padding:.8rem 1rem;border-radius:0 8px 8px 0;margin:.7rem 0;font-size:.87rem;color:var(--dark);line-height:1.5}
+.info-box strong{color:var(--navy)}
+.warn-box{background:#FFF3E0;border-left:4px solid var(--amber);padding:.8rem 1rem;border-radius:0 8px 8px 0;margin:.7rem 0;font-size:.87rem;color:#7A4000;line-height:1.5}
+.card-grid{display:grid;gap:.7rem;margin:.7rem 0}
+.card-grid.cols-2{grid-template-columns:1fr 1fr}
+.card-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.card-grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.card{background:#fff;border:1px solid #DDE3EA;border-radius:8px;padding:.8rem;position:relative;overflow:hidden}
+.card .card-accent{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card h4{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:.35rem}
+.card p,.card li{font-size:.81rem;color:var(--mid);line-height:1.45}
+table.compare{width:100%;border-collapse:collapse;font-size:.82rem;margin:.7rem 0}
+table.compare th{background:var(--navy);color:#fff;padding:.5rem .65rem;text-align:left;font-weight:600}
+table.compare td{padding:.45rem .65rem;border-bottom:1px solid #EEF2F7;vertical-align:top}
+table.compare tr:nth-child(even) td{background:var(--gray)}
+ul.plain-list{margin:.5rem 0;padding-left:1.2rem}
+ul.plain-list li{font-size:.85rem;color:var(--dark);margin-bottom:.38rem;line-height:1.45}
+.prompt-box{background:#F8F9FA;border:1px solid #CCC;border-radius:8px;padding:.75rem .9rem;margin:.5rem 0;font-family:'Courier New',monospace;font-size:.79rem;color:#222;line-height:1.5}
+.prompt-box.good{background:#F0FAF4;border-color:#2E7D32}
+.prompt-box.bad{background:#FFEBEE;border-color:#C62828}
+.step-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:1rem;margin-bottom:.65rem}
+.step-box .step-num{font-size:1.1rem;font-weight:700;color:var(--amber);margin-bottom:.2rem}
+.step-box h4{font-size:.9rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.step-box p{font-size:.82rem;color:#A0C4D8;line-height:1.4}
+.takeaway-item{display:flex;align-items:flex-start;gap:.85rem;background:rgba(255,255,255,.06);border-radius:8px;padding:.85rem;margin-bottom:.6rem}
+.takeaway-item .ti-icon{font-size:1.5rem;color:var(--amber);min-width:28px;margin-top:.1rem}
+.takeaway-item .ti-title{font-size:.92rem;font-weight:700;color:var(--amber);margin-bottom:.2rem}
+.takeaway-item .ti-text{font-size:.82rem;color:#A0C4D8;line-height:1.4}
+.rdcv{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.6rem;margin:.7rem 0}
+.rdcv .rd{border-radius:8px;overflow:hidden;border:1px solid #DDE3EA;background:#fff}
+.rdcv .rd-hdr{padding:.5rem .7rem;color:#fff;font-weight:700;font-size:1rem}
+.rdcv .rd-body{padding:.6rem .7rem}
+.rdcv .rd-q{font-size:.8rem;font-weight:600;color:var(--navy);margin-bottom:.35rem}
+.rdcv .rd-ex{font-size:.74rem;font-family:'Courier New',monospace;color:var(--teal);font-style:italic;line-height:1.4}
+.check-row{display:flex;gap:.6rem;padding:.42rem .6rem;border-bottom:1px solid #EEF2F7;font-size:.84rem;align-items:flex-start}
+.check-row:nth-child(even){background:var(--gray)}
+.check-row .ck{color:var(--teal);font-size:1rem;min-width:18px}
+.check-row .ck-label{font-weight:700;color:var(--navy);min-width:110px}
+.check-row .ck-desc{color:var(--mid);flex:1}
+</style>
+</head>
+<body>
+<div class="deck" id="deck"></div>
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="go(-1)">← Indietro</button>
+  <div class="slide-counter" id="counter">1 / 20</div>
+  <div class="progress-dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="go(1)">Avanti →</button>
+</div>
+<script>
+const slides = [
+  // 1 Cover
+  `<div class="slide s-cover">
+    <div class="left-panel"><div class="icon">✏️</div></div>
+    <div class="right-panel">
+      <span class="mod-badge">MODULO 2</span>
+      <h1>Progettazione didattica con IA e prompting strutturato</h1>
+      <div class="meta">
+        Corso: Formare i formatori sull'IA nella scuola<br>
+        Durata modulo: 5 ore &nbsp;|&nbsp; Impianto: Train the Trainers<br>
+        Istituto Comprensivo – A.S. 2025/2026
+      </div>
+    </div>
+  </div>`,
+
+  // 2 Obiettivi
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Obiettivi e struttura del modulo</h2>
+      <div class="subtitle">Cosa impareremo e come è organizzato M2</div>
+      <div class="info-box"><strong>Obiettivo formativo:</strong> sviluppare competenze operative sul prompting didattico e sulla creazione di contenuti efficaci per lezioni interattive, simulazioni e attività formative trasferibili ai colleghi.</div>
+      <div class="card-grid cols-4" style="margin-top:.85rem">
+        <div class="card"><div class="card-accent" style="background:#1A3560"></div><h4>01 · Anatomia del prompt</h4><p>Il framework R-D-C-V: Ruolo, Destinatari, Compito, Vincoli</p></div>
+        <div class="card"><div class="card-accent" style="background:#0D7C8F"></div><h4>02 · Tecniche di prompting</h4><p>Role, few-shot, iterativo, con vincoli, ragionamento guidato</p></div>
+        <div class="card"><div class="card-accent" style="background:#5B4A8A"></div><h4>03 · Prompt per il I ciclo</h4><p>Calibrati per livello, disciplina, tempi reali e bisogni educativi</p></div>
+        <div class="card"><div class="card-accent" style="background:#E8820C"></div><h4>04 · Prompt library</h4><p>Raccolta condivisa di prompt testati e validati per l'istituto</p></div>
+      </div>
+      <div style="background:var(--amber);border-radius:6px;padding:.6rem 1rem;margin-top:.85rem;font-size:.85rem;font-weight:600;color:#fff">🔬 Laboratorio: Confronto prompt deboli vs progettati + costruzione della prompt library</div>
+    </div>
+  </div>`,
+
+  // 3 Cos'è un prompt
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Cos'è un prompt? Definizione operativa</h2>
+      <div class="subtitle">Il punto di partenza per qualsiasi uso efficace dei chatbot IA</div>
+      <table class="compare">
+        <tr><th style="width:24%">Termine</th><th>Definizione operativa</th></tr>
+        <tr><td><strong>Prompt</strong></td><td>L'input che fornisci al sistema IA (testo, istruzione, domanda). La qualità del prompt determina la qualità dell'output.</td></tr>
+        <tr><td><strong>Output</strong></td><td>Il risultato che il sistema IA produce a partire dal tuo prompt. Va sempre verificato prima dell'uso didattico.</td></tr>
+        <tr><td><strong>Contesto</strong></td><td>Le informazioni di sfondo che aiutano l'IA a capire cosa ti serve: classe, disciplina, livello, vincoli organizzativi.</td></tr>
+        <tr><td><strong>Iterazione</strong></td><td>Il processo di miglioramento progressivo del prompt in base agli output ricevuti. È la norma, non l'eccezione.</td></tr>
+        <tr><td><strong>Prompt library</strong></td><td>Raccolta organizzata di prompt testati e validati, riutilizzabili per scopi ricorrenti. Il prodotto principale di questo modulo.</td></tr>
+      </table>
+      <div class="info-box"><strong>L'idea chiave del modulo:</strong> il prompt non è una domanda buttata lì — è una piccola progettazione didattica. Chi sa progettare una lezione possiede già le competenze per progettare un buon prompt.</div>
+    </div>
+  </div>`,
+
+  // 4 Generico vs strutturato
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Prompt generico vs prompt strutturato</h2>
+      <div class="subtitle">Il confronto che cambia tutto</div>
+      <p style="font-size:.88rem;color:var(--mid);margin-bottom:.6rem">Lo stesso obiettivo didattico produce risultati completamente diversi a seconda di come si costruisce il prompt.</p>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-top:3px solid #C62828">
+          <h4 style="color:#C62828">❌ Prompt generico</h4>
+          <div class="prompt-box bad">Scrivi una lezione sulla fotosintesi</div>
+          <p><strong>Output:</strong> testo generico per adulti, senza struttura, senza obiettivi, spesso inutilizzabile direttamente in classe.</p>
+        </div>
+        <div class="card" style="border-top:3px solid #2E7D32">
+          <h4 style="color:#2E7D32">✓ Prompt strutturato</h4>
+          <div class="prompt-box good">Sei un docente di scienze per la classe IV primaria. Crea una scheda operativa sulla fotosintesi (40 min). Lessico semplice, 1 attività pratica senza digitale, 3 domande di verifica. Formato: titolo, obiettivo, attività, verifica.</div>
+          <p><strong>Output:</strong> struttura completa, linguaggio adatto, attività pratica, verifica integrata, pronto da adattare.</p>
+        </div>
+      </div>
+      <div class="info-box"><strong>Cosa rende il secondo prompt più efficace?</strong> Ruolo assegnato, destinatari precisi, compito definito, vincoli espliciti: i quattro elementi del framework R-D-C-V che vediamo nella prossima slide.</div>
+    </div>
+  </div>`,
+
+  // 5 R-D-C-V
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Anatomia di un prompt didattico strutturato</h2>
+      <div class="subtitle">Il framework R-D-C-V per costruire prompt efficaci</div>
+      <p style="font-size:.88rem;color:var(--mid);margin-bottom:.6rem">Ogni prompt didattico efficace contiene 4 elementi fondamentali. Più elementi sono presenti, più l'output sarà preciso e riutilizzabile.</p>
+      <div class="rdcv">
+        <div class="rd"><div class="rd-hdr" style="background:#1A3560">R · Ruolo</div><div class="rd-body"><div class="rd-q">Chi deve essere l'IA?</div><div class="rd-ex">«Sei un docente esperto di italiano per la scuola secondaria di I grado»</div></div></div>
+        <div class="rd"><div class="rd-hdr" style="background:#0D7C8F">D · Destinatari</div><div class="rd-body"><div class="rd-q">Per chi è il materiale?</div><div class="rd-ex">«per una classe II con 24 alunni, 3 con DSA, livello medio B1»</div></div></div>
+        <div class="rd"><div class="rd-hdr" style="background:#5B4A8A">C · Compito</div><div class="rd-body"><div class="rd-q">Cosa deve produrre?</div><div class="rd-ex">«Progetta una scheda di analisi del testo poetico in 3 parti»</div></div></div>
+        <div class="rd"><div class="rd-hdr" style="background:#E8820C">V · Vincoli</div><div class="rd-body"><div class="rd-q">Quali condizioni rispettare?</div><div class="rd-ex">«Max 30 minuti, linguaggio semplice, includi un esempio già risolto»</div></div></div>
+      </div>
+      <div class="info-box"><strong>Per il formatore:</strong> R-D-C-V è lo strumento di scaffolding per i colleghi. Basta che un collega completi i 4 campi per avere un prompt funzionante — senza dover imparare alcuna teoria.</div>
+    </div>
+  </div>`,
+
+  // 6 Role prompting
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Role prompting: assegnare un ruolo all'IA</h2>
+      <div class="subtitle">Come trasformare l'IA in un esperto su misura</div>
+      <div class="info-box">Assegnare un'identità professionale specifica all'IA ne adatta registro, lessico e livello di dettaglio. È la tecnica con il miglior rapporto sforzo/risultato: una riga di prompt, un effetto immediato.</div>
+      <table class="compare">
+        <tr><th style="width:32%">Ruolo assegnato</th><th>Effetto sull'output</th></tr>
+        <tr><td><strong>«Sei un'educatrice esperta di scuola dell'infanzia»</strong></td><td>Attività ludiche e manipolative, linguaggio per 3-6 anni, nessuna richiesta di letto-scrittura</td></tr>
+        <tr><td><strong>«Sei un esperto di differenziazione didattica»</strong></td><td>Varianti per livelli, attenzione a DSA e BES, formati alternativi dello stesso contenuto</td></tr>
+        <tr><td><strong>«Sei un tutor socratico»</strong></td><td>Non dà la risposta: guida con domande progressive. Utile per simulazioni di dialogo formativo</td></tr>
+        <tr><td><strong>«Sei un formatore che prepara una sessione per colleghi non esperti di IA»</strong></td><td>Stile formativo, esempi pratici, FAQ anticipate, struttura progressiva: il ruolo chiave per il Train the Trainers</td></tr>
+      </table>
+      <div class="warn-box"><strong>Attenzione:</strong> il ruolo non rende l'IA realmente esperta — orienta solo lo stile e il registro. La correttezza dei contenuti va sempre verificata, qualunque ruolo sia stato assegnato.</div>
+    </div>
+  </div>`,
+
+  // 7 Few-shot
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Few-shot prompting: guidare con esempi</h2>
+      <div class="subtitle">Mostrare all'IA il formato esatto che vuoi</div>
+      <p style="font-size:.88rem;color:var(--mid);margin-bottom:.5rem">Il few-shot prompting consiste nel fornire 1-3 esempi del risultato atteso dentro il prompt. L'IA adatta stile, formato e registro agli esempi forniti.</p>
+      <div class="prompt-box">Scrivi 5 domande di comprensione per un brano narrativo (classe IV primaria).<br><br>
+Esempio 1 (comprensione letterale): «Dove si svolge la storia?»<br>
+Esempio 2 (comprensione inferenziale): «Perché secondo te il protagonista decide di non parlare?»<br>
+Esempio 3 (riflessione personale): «Ti è mai capitata una situazione simile? Come ti sei sentito?»<br><br>
+Ora scrivi 5 domande dello stesso tipo per questo brano: [testo]</div>
+      <div class="card-grid cols-3">
+        <div class="card"><h4>1–3 esempi bastano</h4><p>Più esempi non sempre migliorano l'output. Un esempio ben costruito è spesso sufficiente.</p></div>
+        <div class="card"><h4>Etichetta gli esempi</h4><p>Indica il tipo di domanda («inferenziale», «letterale») per guidare la categorizzazione.</p></div>
+        <div class="card"><h4>Usa il tuo curricolo</h4><p>Esempi presi dai tuoi materiali producono output più coerenti con il tuo contesto specifico.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 8 Iterativo
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Prompt iterativo: migliorare progressivamente</h2>
+      <div class="subtitle">Il prompting non è un atto unico: è un processo in 3-4 passi</div>
+      <p style="font-size:.88rem;color:var(--mid);margin-bottom:.5rem">Il primo output raramente è quello finale. Il prompt iterativo usa ogni output come base per un prompt successivo di affinamento.</p>
+      <table class="compare">
+        <tr><th style="width:10%">Passo</th><th style="width:52%">Prompt</th><th>Risultato</th></tr>
+        <tr><td><strong>1</strong></td><td class="prompt-box" style="display:table-cell;font-family:'Courier New',monospace;font-size:.78rem">«Scrivi una simulazione da 15 minuti sul Medioevo per la classe II secondaria di I grado. Includi ruoli per almeno 4 personaggi.»</td><td>Simulazione generica, personaggi poco definiti, non adatta al livello.</td></tr>
+        <tr><td><strong>2</strong></td><td style="font-family:'Courier New',monospace;font-size:.78rem">«Rielabora la simulazione. I personaggi devono essere: un mercante, un cavaliere, un contadino, un monaco. Aggiungi per ognuno 3 battute tipiche del suo ruolo sociale.»</td><td>Personaggi più caratterizzati, ma linguaggio ancora troppo formale.</td></tr>
+        <tr><td><strong>3</strong></td><td style="font-family:'Courier New',monospace;font-size:.78rem">«Semplifica il linguaggio delle battute per alunni di 12-13 anni. Aggiungi una domanda di debriefing finale per la classe.»</td><td><strong style="color:#2E7D32">Output finale: pronto per l'uso in classe</strong>, con adeguamento linguistico e guida al docente.</td></tr>
+      </table>
+      <div class="info-box"><strong>Consiglio per la library:</strong> salvare il prompt finale dell'iterazione, non il primo. È il risultato di un raffinamento che vale la pena conservare e condividere.</div>
+    </div>
+  </div>`,
+
+  // 9 Vincoli didattici
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Prompt con vincoli didattici</h2>
+      <div class="subtitle">Livello, disciplina, tempo, classe: i 4 vincoli fondamentali</div>
+      <div class="info-box">I vincoli non limitano l'IA: <strong>la orientano</strong> verso output didatticamente utilizzabili nel contesto specifico del primo ciclo.</div>
+      <table class="compare">
+        <tr><th style="width:36%">Problema senza vincolo</th><th>Vincolo che lo risolve</th></tr>
+        <tr><td>Linguaggio inadatto all'età</td><td style="font-family:'Courier New',monospace;font-size:.78rem">«Usa un lessico adatto a bambini di 8-9 anni, frasi brevi, parole frequenti»</td></tr>
+        <tr><td>Contenuti generici e decontestualizzati</td><td style="font-family:'Courier New',monospace;font-size:.78rem">«Inserisci riferimenti alle Indicazioni Nazionali per italiano / classe II primaria»</td></tr>
+        <tr><td>Attività irrealizzabile nei tempi scolastici</td><td style="font-family:'Courier New',monospace;font-size:.78rem">«La durata complessiva deve essere 20 minuti di lezione frontale + 10 di laboratorio»</td></tr>
+        <tr><td>Non adatto al contesto reale della classe</td><td style="font-family:'Courier New',monospace;font-size:.78rem">«La classe ha 26 alunni, 2 con DSA, 3 di recente immigrazione. Includi varianti.»</td></tr>
+      </table>
+      <div class="warn-box"><strong>Privacy (da M2 §8):</strong> i vincoli descrivono la classe in forma generica — numeri, livelli, tipologie di bisogno. Mai nomi, mai diagnosi individuali, mai dati identificativi.</div>
+    </div>
+  </div>`,
+
+  // 10 BES e primo ciclo
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Prompt per i bisogni educativi e il primo ciclo</h2>
+      <div class="subtitle">Adattare l'IA alla realtà dell'istituto comprensivo</div>
+      <div class="card-grid cols-3">
+        <div class="card" style="border-top:3px solid var(--teal)">
+          <h4>DSA (dislessia, disgrafia, discalculia)</h4>
+          <div class="prompt-box" style="font-size:.74rem">«Riscrivi questo testo per un alunno con dislessia: frasi max 12 parole, lessico frequente, paragrafi corti con titoletti, evidenzia le parole-chiave. Aggiungi uno schema visivo dei concetti.»</div>
+        </div>
+        <div class="card" style="border-top:3px solid #2E7D32">
+          <h4>Alunni con livello avanzato</h4>
+          <div class="prompt-box" style="font-size:.74rem">«Crea una versione potenziata dell'attività per alunni veloci: aggiungi una sfida aggiuntiva, un problema aperto o un approfondimento trasversale.»</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--amber)">
+          <h4>Alunni con BES (piano personalizzato)</h4>
+          <div class="prompt-box" style="font-size:.74rem">«Progetta una versione ridotta e visuale dell'attività: meno testo scritto, più supporti iconici, obiettivi ridotti ma essenziali, tempi più lunghi.»</div>
+        </div>
+      </div>
+      <div class="info-box"><strong>Il valore per l'inclusione:</strong> la differenziazione è il caso d'uso dove l'IA fa risparmiare più tempo al docente — tre versioni dello stesso materiale in minuti anziché ore. Il bisogno si descrive sempre in forma generica, senza dati identificativi (PDP e PEI non si caricano mai).</div>
+    </div>
+  </div>`,
+
+  // 11 Ragionamento guidato
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Prompt di ragionamento guidato</h2>
+      <div class="subtitle">Chiedere passaggi espliciti, criteri e controlli: non delegare il ragionamento</div>
+      <div class="warn-box"><strong>Chiarimento fondamentale:</strong> il ragionamento guidato non delega all'IA il giudizio professionale. Chiede all'IA di rendere espliciti i passaggi e i criteri usati, così che il docente possa verificarli e contestarli.</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-top:3px solid #C62828">
+          <h4 style="color:#C62828">❌ Delega opaca (da evitare)</h4>
+          <div class="prompt-box bad">«Fai da solo la rubrica di valutazione per il testo narrativo, classe V.»</div>
+          <ul class="plain-list" style="padding-left:1rem">
+            <li>Non sai su quali criteri si è basata l'IA</li>
+            <li>Non puoi verificare la coerenza con le Indicazioni</li>
+            <li>Non puoi spiegare le scelte ai colleghi o agli alunni</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid #2E7D32">
+          <h4 style="color:#2E7D32">✓ Ragionamento guidato (da usare)</h4>
+          <div class="prompt-box good">«Crea la rubrica. Prima però: 1) elenca i traguardi delle Indicazioni che vuoi valutare, 2) spiega perché questi, 3) indica le dimensioni del punteggio. Solo dopo presenta la rubrica.»</div>
+          <ul class="plain-list" style="padding-left:1rem">
+            <li>I criteri sono visibili e contestabili</li>
+            <li>Il processo è trasparente e trasferibile</li>
+            <li>Il giudizio professionale resta al docente</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>`,
+
+  // 12 Prompt library struttura
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>La prompt library: costruire una libreria condivisa</h2>
+      <div class="subtitle">Lo strumento del formatore interno per la disseminazione</div>
+      <div class="info-box">Una prompt library è una raccolta organizzata di prompt <strong>testati, validati e pronti all'uso</strong>. È il prodotto principale del Modulo 2 e diventa parte del Kit del formatore.</div>
+      <table class="compare">
+        <tr><th style="width:24%">Campo della scheda</th><th>Contenuto</th></tr>
+        <tr><td><strong>Codice</strong></td><td>Identificativo univoco (es. IT-P3-LEZ-01: italiano, primaria cl. III, lezione, n. 1)</td></tr>
+        <tr><td><strong>Disciplina</strong></td><td>Matematica, italiano, storia, scienze…</td></tr>
+        <tr><td><strong>Ordine</strong></td><td>Infanzia / Primaria / Secondaria di I grado</td></tr>
+        <tr><td><strong>Tipo</strong></td><td>Lezione, attività, valutazione, differenziazione BES…</td></tr>
+        <tr><td><strong>Prompt</strong></td><td>Il testo del prompt validato, copiabile</td></tr>
+        <tr><td><strong>Output atteso</strong></td><td>Un esempio di output accettabile, per riconoscere quando l'output è fuori target</td></tr>
+        <tr><td><strong>Autore + Data</strong></td><td>Chi ha testato e approvato il prompt, data dell'ultima verifica</td></tr>
+      </table>
+      <div class="info-box"><strong>Perché costruirla insieme ai colleghi:</strong> un prompt testato da un collega vale più di dieci generati in fretta. Riduce i tempi di preparazione, rende l'adozione sostenibile, crea cultura condivisa — ed è un prodotto concreto della formazione interna, visibile e spendibile.</div>
+    </div>
+  </div>`,
+
+  // 13 Esempi pratici
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Esempi di prompt per il primo ciclo</h2>
+      <div class="subtitle">Lezione interattiva, attività cooperativa, scheda operativa</div>
+      <div class="card-grid cols-3">
+        <div class="card" style="border-top:3px solid var(--teal)">
+          <h4>Storia · Classe III primaria · 30 min</h4>
+          <div class="prompt-box" style="font-size:.73rem">«Sei un docente di storia della classe III primaria. Progetta una lezione interattiva di 30 min sulla vita quotidiana nella preistoria: 1 aggancio iniziale (domanda curiosa), 2 momenti di scoperta guidata con materiali concreti, 1 gioco di consolidamento. Lessico per bambini di 8 anni.»</div>
+        </div>
+        <div class="card" style="border-top:3px solid #5B4A8A">
+          <h4>Scienze · Classe II secondaria · 45 min</h4>
+          <div class="prompt-box" style="font-size:.73rem">«Sei un docente di scienze, classe II secondaria di I grado. Crea un'attività cooperativa di 45 min sugli ecosistemi: gruppi da 4 con ruoli definiti, una consegna per gruppo, materiali necessari, criteri di osservazione per il docente, debriefing finale di 10 min.»</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--amber)">
+          <h4>Italiano · Classe V primaria · Testo espositivo</h4>
+          <div class="prompt-box" style="font-size:.73rem">«Sei un docente di italiano della classe V primaria. Crea una scheda operativa sul testo espositivo: breve esempio (max 100 parole), 3 esercizi di riconoscimento della struttura, 1 consegna di scrittura guidata con scaletta. Includi variante semplificata per alunno con DSA.»</div>
+        </div>
+      </div>
+      <div class="info-box">Tutti e tre seguono R-D-C-V e sono pronti per la library: nel laboratorio li userete come modello per costruire i vostri.</div>
+    </div>
+  </div>`,
+
+  // 14 Prompt per formare i colleghi
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Prompt per formare i colleghi</h2>
+      <div class="subtitle">Usare l'IA per progettare la formazione interna</div>
+      <p style="font-size:.88rem;color:var(--mid);margin-bottom:.5rem">Il formatore interno può usare l'IA anche per progettare i propri interventi formativi: creare scenari, FAQ, esercizi comparativi, casi di studio.</p>
+      <div class="card-grid cols-2">
+        <div class="card">
+          <h4>Costruire una FAQ per la formazione</h4>
+          <div class="prompt-box" style="font-size:.76rem">«Sei un formatore esperto. Sto preparando un incontro di 2 ore sull'IA per docenti del primo ciclo non esperti. Genera le 10 domande più probabili che riceverò (incluse le più scettiche e le più difficili su privacy e valutazione), con una bozza di risposta breve e fondata per ciascuna.»</div>
+        </div>
+        <div class="card">
+          <h4>Costruire uno scenario di confronto</h4>
+          <div class="prompt-box" style="font-size:.76rem">«Crea uno scenario realistico per una formazione docenti: un insegnante di primaria vuole usare l'IA per preparare verifiche ma teme di "barare". Scrivi il caso in 8-10 righe, poi 3 domande di discussione che facciano emergere il tema del controllo professionale.»</div>
+        </div>
+      </div>
+      <div class="info-box"><strong>Effetto dimostrativo:</strong> usare l'IA per preparare la formazione sull'IA è anche una dimostrazione pratica del metodo — i colleghi vedono il processo applicato dal vivo, con i suoi pregi e i suoi limiti.</div>
+    </div>
+  </div>`,
+
+  // 15 Checklist verifica
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Come verificare un output generato da prompt</h2>
+      <div class="subtitle">La checklist di revisione prima dell'uso in classe</div>
+      <div style="border:1px solid #DDE3EA;border-radius:8px;overflow:hidden;margin-top:.4rem">
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Correttezza</span><span class="ck-desc">I contenuti disciplinari sono corretti? Ci sono informazioni false o approssimative?</span></div>
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Adeguatezza</span><span class="ck-desc">Il linguaggio è adatto al livello e all'età dei destinatari?</span></div>
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Bias</span><span class="ck-desc">Ci sono stereotipi (di genere, culturali, sociali) nell'output? Sono stati rimossi?</span></div>
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Fonti</span><span class="ck-desc">Se cita dati, statistiche o autori: le fonti sono verificabili? Esistono davvero?</span></div>
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Formato</span><span class="ck-desc">La struttura dell'output è usabile com'è o va rielaborata?</span></div>
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Coerenza</span><span class="ck-desc">L'output risponde a quanto richiesto dal prompt? Manca qualcosa?</span></div>
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Privacy</span><span class="ck-desc">L'output contiene dati di alunni o riferimenti a persone reali identificabili?</span></div>
+        <div class="check-row"><span class="ck">☐</span><span class="ck-label">Curricolo</span><span class="ck-desc">Il contenuto è coerente con le Indicazioni Nazionali e con il progetto del docente?</span></div>
+      </div>
+      <div class="warn-box"><strong>Regola fondamentale:</strong> nessun output IA entra in classe senza questa revisione. È qui — non nella generazione — che il docente aggiunge il proprio valore professionale.</div>
+    </div>
+  </div>`,
+
+  // 16 Errori comuni
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Errori comuni nel prompting didattico</h2>
+      <div class="subtitle">Cosa insegnare ai colleghi per evitare le trappole più frequenti</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-left:4px solid #C62828"><h4>Prompt troppo vago</h4><p>❌ «Scrivi qualcosa sulla matematica» → ✓ Specificare sempre: livello, classe, durata, obiettivo, formato atteso.</p></div>
+        <div class="card" style="border-left:4px solid #C62828"><h4>Output non revisionato</h4><p>❌ Usare in classe l'output così com'è → ✓ Ogni output va letto, verificato, corretto. Mai consegnare materiale non revisionato agli alunni.</p></div>
+        <div class="card" style="border-left:4px solid #C62828"><h4>Destinatari assenti</h4><p>❌ Nessuna indicazione su chi userà il materiale → ✓ Specificare: per chi? Età, livello, eventuali difficoltà della classe.</p></div>
+        <div class="card" style="border-left:4px solid #C62828"><h4>Delegare la valutazione</h4><p>❌ «Valuta questo compito e dagli un voto» → ✓ L'IA può supportare la valutazione formativa ma non sostituirla. Il giudizio è del docente.</p></div>
+        <div class="card" style="border-left:4px solid #C62828"><h4>Ignorare il contesto normativo</h4><p>❌ Caricare compiti di alunni su ChatGPT → ✓ Dati di alunni mai su piattaforme esterne. Uso personale e uso con dati alunni sono cose diverse.</p></div>
+        <div class="card" style="border-left:4px solid #C62828"><h4>Aspettarsi il prompt perfetto</h4><p>❌ Frustrazione se il primo output non è quello atteso → ✓ Il prompting è iterativo: 2-3 affinamenti sono normali e utili per imparare.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 17 Focus TTT
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Focus Train the Trainers: insegnare il prompting</h2>
+      <div class="subtitle">Come trasferire queste competenze ai colleghi dell'istituto</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>1. Il confronto dal vivo</h4><p>Apri un chatbot in proiezione, digita un prompt generico, mostra l'output. Poi lo stesso obiettivo con un prompt strutturato. Il confronto parla da solo — nessuna teoria necessaria.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>2. Cinque minuti di pratica vera</h4><p>Dai ai colleghi 5 minuti per scrivere un prompt sul proprio argomento. Il feedback immediato su un prompt reale è più efficace di qualsiasi spiegazione.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>3. R-D-C-V come scaffolding</h4><p>La griglia a 4 elementi è lo strumento di supporto: basta che un collega completi i 4 campi per avere un prompt funzionante. La teoria viene dopo, se serve.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>4. L'errore come palestra</h4><p>Mostra un output con problemi (un'allucinazione, un bias, un contenuto fuori livello). Chiedi ai colleghi di trovarlo. Crea consapevolezza prima del permesso.</p></div>
+      </div>
+      <div class="info-box"><strong>5. Costruisci la library insieme:</strong> non consegnare una raccolta già pronta. Ogni prompt costruito e testato da un collega durante la formazione viene sentito come proprio — ed è quello che verrà davvero usato.</div>
+    </div>
+  </div>`,
+
+  // 18 Laboratorio (dark)
+  `<div class="slide s-dark">
+    <div class="top-bar"></div><div class="bot-bar"></div>
+    <div class="inner">
+      <div style="font-size:.75rem;font-weight:700;color:var(--amber);letter-spacing:.1em;margin-bottom:.75rem">LABORATORIO M2</div>
+      <h2 style="font-size:1.45rem;margin-bottom:1.1rem">Confronto prompt deboli vs progettati + costruzione della prompt library</h2>
+      <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:.75rem 1rem;margin-bottom:1.1rem;font-size:.88rem;color:#A0C4D8;font-style:italic">Obiettivo: costruire almeno 3 prompt validati, pronti per la prompt library dell'istituto, attraverso un ciclo completo di progettazione–test–revisione.</div>
+      <div class="card-grid cols-2" style="gap:.65rem">
+        <div class="step-box"><div class="step-num">01</div><h4>Analisi comparativa (20 min)</h4><p>A coppie: confrontare un prompt debole con uno strutturato sullo stesso obiettivo. Usare la griglia R-D-C-V per migliorare il prompt debole.</p></div>
+        <div class="step-box"><div class="step-num">02</div><h4>Progettazione (25 min)</h4><p>Individualmente: scrivere 2-3 prompt su obiettivi didattici reali della propria disciplina e ordine. Applicare: role, vincoli, formato.</p></div>
+        <div class="step-box"><div class="step-num">03</div><h4>Test e revisione (30 min)</h4><p>Testare i prompt sul chatbot. Raccogliere gli output. Applicare la checklist di revisione in 8 punti.</p></div>
+        <div class="step-box"><div class="step-num">04</div><h4>Schede e validazione (25 min)</h4><p>Compilare la scheda della prompt library per ogni prompt validato. Condividere in plenaria: i migliori entrano nella library condivisa.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 19 Prodotto
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Il prodotto di M2: la prompt library</h2>
+      <div class="subtitle">Seconda componente del kit del formatore interno</div>
+      <table class="compare" style="font-size:.78rem">
+        <tr><th>Codice</th><th>Disciplina</th><th>Ordine</th><th>Tipo</th><th>Prompt (sintesi)</th><th>Stato</th></tr>
+        <tr><td>ST-P3-LEZ-01</td><td>Storia</td><td>Primaria III</td><td>Lezione</td><td>Lezione interattiva 30 min sulla preistoria, con gioco di consolidamento</td><td style="color:#2E7D32;font-weight:600">Validato</td></tr>
+        <tr><td>SC-S2-COOP-01</td><td>Scienze</td><td>Second. II</td><td>Attività coop.</td><td>Attività cooperativa 45 min sugli ecosistemi, gruppi con ruoli</td><td style="color:#2E7D32;font-weight:600">Validato</td></tr>
+        <tr><td>IT-P5-SCH-01</td><td>Italiano</td><td>Primaria V</td><td>Scheda + BES</td><td>Scheda sul testo espositivo con variante DSA</td><td style="color:#2E7D32;font-weight:600">Validato</td></tr>
+        <tr><td>MA-P4-REC-01</td><td>Matematica</td><td>Primaria IV</td><td>Recupero</td><td>Esercizi graduati su frazioni equivalenti, 3 livelli</td><td style="color:#E8820C;font-weight:600">In test</td></tr>
+        <tr><td><em style="color:var(--cap)">[codice]</em></td><td><em style="color:var(--cap)">[disciplina]</em></td><td><em style="color:var(--cap)">[ordine]</em></td><td><em style="color:var(--cap)">[tipo]</em></td><td><em style="color:var(--cap)">[da compilare nel laboratorio]</em></td><td><em style="color:var(--cap)">—</em></td></tr>
+      </table>
+      <div class="info-box">La library è <strong>aggiornabile ogni anno scolastico</strong> con nuovi prompt verificati. Sarà riusata in M3 (prompt per la valutazione formativa), M5 (accompagnamento dei colleghi) e nel micro-teaching di M6.</div>
+    </div>
+  </div>`,
+
+  // 20 Sintesi (dark)
+  `<div class="slide s-dark">
+    <div class="top-bar"></div><div class="bot-bar"></div>
+    <div class="inner">
+      <div style="font-size:.75rem;font-weight:700;color:var(--teal);letter-spacing:.1em;margin-bottom:.5rem">SINTESI DEL MODULO 2</div>
+      <h2 style="margin-bottom:1rem">Cosa portate a casa</h2>
+      <div class="takeaway-item"><div class="ti-icon">🧩</div><div><div class="ti-title">Il framework R-D-C-V</div><div class="ti-text">Ruolo, Destinatari, Compito, Vincoli: la struttura per qualsiasi prompt didattico nel primo ciclo</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">🔧</div><div><div class="ti-title">Cinque tecniche di prompting</div><div class="ti-text">Role, few-shot, iterativo, con vincoli, ragionamento guidato: quando e come usare ciascuna</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">✓</div><div><div class="ti-title">La checklist di revisione</div><div class="ti-text">8 criteri per verificare ogni output prima di usarlo in classe: correttezza, bias, fonti, privacy, curricolo</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">📋</div><div><div class="ti-title">La prompt library</div><div class="ti-text">Raccolta di prompt testati, organizzata per disciplina, ordine e tipo: pronta per essere condivisa con i colleghi</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">🎓</div><div><div class="ti-title">Strategie Train the Trainers</div><div class="ti-text">Tecniche per insegnare il prompting ai colleghi: confronto dal vivo, scaffolding R-D-C-V, iterazione guidata</div></div></div>
+    </div>
+  </div>`
+];
+
+let cur = 0;
+const deck = document.getElementById('deck');
+const dotsEl = document.getElementById('dots');
+slides.forEach((html)=>{const div=document.createElement('div');div.innerHTML=html;deck.appendChild(div.firstElementChild);});
+slides.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' current':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);});
+function goTo(n){
+  const sls=deck.querySelectorAll('.slide'), dts=dotsEl.querySelectorAll('.dot');
+  sls[cur].classList.remove('active'); dts[cur].classList.remove('current'); dts[cur].classList.add('done');
+  cur=n;
+  sls[cur].classList.add('active'); dts[cur].classList.remove('done'); dts[cur].classList.add('current');
+  document.getElementById('counter').textContent=(cur+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+}
+function go(d){if(cur+d>=0&&cur+d<slides.length)goTo(cur+d);}
+goTo(0);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+});
+</script>
+</body>
+</html>

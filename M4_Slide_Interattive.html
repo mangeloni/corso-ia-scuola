@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M4 – Limiti, rischi, AI Act e uso responsabile | Slide interattive</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#1A3560;--teal:#0D7C8F;--amber:#E8820C;--light:#EAF3F7;--gray:#F4F6F8;--white:#fff;--dark:#1E1E1E;--mid:#4A5568;--red:#C62828;--green:#2E7D32;--purple:#5B4A8A}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#0f1e35}
+.deck{width:100%;height:100vh;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .3s}
+.slide.active{display:flex;opacity:1}
+/* Nav */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(26,53,96,.93);backdrop-filter:blur(8px);display:flex;align-items:center;padding:.5rem 1.5rem;gap:1rem;z-index:100;height:48px}
+.nav-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .9rem;border-radius:6px;cursor:pointer;font-size:.82rem;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,.15)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.slide-counter{color:rgba(255,255,255,.6);font-size:.82rem;margin:0 auto}
+.progress-dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:300px}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s;cursor:pointer}
+.dot.done{background:rgba(255,255,255,.5)}
+.dot.current{background:var(--amber);transform:scale(1.3)}
+/* Slide types */
+.s-cover{background:var(--navy);display:flex;flex-direction:row}
+.s-cover .l{width:32%;background:var(--teal);display:flex;align-items:center;justify-content:center;padding:2rem;font-size:5rem}
+.s-cover .r{flex:1;padding:2.5rem 3rem;display:flex;flex-direction:column;justify-content:center}
+.s-cover .badge{display:inline-block;background:var(--amber);color:#fff;font-size:.75rem;font-weight:700;padding:.3rem .9rem;border-radius:20px;letter-spacing:.08em;margin-bottom:1rem;align-self:flex-start}
+.s-cover h1{font-size:2.15rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:1.5rem}
+.s-cover .meta{font-size:.9rem;color:#A0C4D8;line-height:1.8}
+.s-content{background:var(--white);padding:0 0 48px;display:flex;flex-direction:column}
+.s-content .bar-top{height:6px;background:var(--navy)}
+.s-content .bar-left{width:5px;position:fixed;left:0;top:6px;bottom:48px;background:var(--amber)}
+.s-content .inner{padding:1.4rem 2rem 1rem 2.5rem;flex:1;overflow-y:auto}
+.s-content h2{font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:.22rem}
+.s-content .sub{font-size:.9rem;color:var(--teal);font-style:italic;margin-bottom:1rem}
+.s-dark{background:var(--navy);padding:0 0 48px;display:flex;flex-direction:column}
+.s-dark .bar-top{height:4px;background:var(--teal)}
+.s-dark .bar-bot{position:fixed;bottom:48px;left:0;right:0;height:4px;background:var(--amber)}
+.s-dark .inner{padding:1.5rem 2rem;flex:1;overflow-y:auto}
+.s-dark h2{font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:.25rem}
+/* Components */
+.info{background:var(--light);border-left:4px solid var(--teal);padding:.78rem 1rem;border-radius:0 8px 8px 0;margin:.65rem 0;font-size:.87rem;color:var(--dark);line-height:1.5}
+.info strong{color:var(--navy)}
+.warn{background:#FFF3E0;border-left:4px solid var(--amber);padding:.78rem 1rem;border-radius:0 8px 8px 0;margin:.65rem 0;font-size:.87rem;color:#7A4000;line-height:1.5}
+.grid{display:grid;gap:.65rem;margin:.65rem 0}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.card{background:#fff;border:1px solid #DDE3EA;border-radius:8px;padding:.8rem;position:relative;overflow:hidden}
+.card .acc{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card h4{font-size:.87rem;font-weight:700;color:var(--navy);margin-bottom:.3rem}
+.card p,.card li{font-size:.81rem;color:var(--mid);line-height:1.45}
+.card ul{padding-left:1.1rem;margin-top:.3rem}
+tbl{width:100%;border-collapse:collapse;font-size:.81rem;margin:.65rem 0}
+table.tbl{width:100%;border-collapse:collapse;font-size:.81rem;margin:.65rem 0}
+table.tbl th{background:var(--navy);color:#fff;padding:.45rem .6rem;text-align:left;font-weight:600}
+table.tbl td{padding:.42rem .6rem;border-bottom:1px solid #EEF2F7;vertical-align:top;line-height:1.4}
+table.tbl tr:nth-child(even) td{background:var(--gray)}
+.tbl-risk td:nth-child(3){font-weight:700}
+.risk-min{color:var(--green)}
+.risk-lim{color:var(--amber)}
+.risk-alt{color:var(--red)}
+.risk-viet{color:#B71C1C}
+ul.pl{margin:.4rem 0;padding-left:1.2rem}
+ul.pl li{font-size:.84rem;color:var(--dark);margin-bottom:.36rem;line-height:1.45}
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:.5rem;margin:.65rem 0}
+.tl-row{display:flex;gap:.85rem;align-items:flex-start}
+.tl-date{min-width:130px;font-weight:700;font-size:.9rem;color:var(--amber);padding-top:.1rem}
+.tl-bar{width:4px;min-height:100%;background:var(--teal);border-radius:2px;margin-top:.3rem;position:relative}
+.tl-bar::before{content:'';position:absolute;top:0;left:-4px;width:12px;height:12px;border-radius:50%;background:var(--teal)}
+.tl-content h4{font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:.15rem}
+.tl-content p{font-size:.82rem;color:var(--mid);line-height:1.4}
+.tl-content .tag{display:inline-block;background:var(--light);color:var(--teal);font-size:.72rem;font-weight:600;padding:.1rem .45rem;border-radius:10px;margin-top:.2rem}
+/* Risk boxes */
+.risk-box{border-radius:8px;overflow:hidden;margin-bottom:.55rem}
+.risk-hdr{padding:.4rem .9rem;font-size:.8rem;font-weight:700;letter-spacing:.04em;color:#fff}
+.risk-body{padding:.55rem .9rem;font-size:.81rem;line-height:1.5}
+.risk-body li{margin-bottom:.2rem}
+/* Checklist */
+.ck-section{border:1px solid #DDE3EA;border-radius:8px;overflow:hidden;margin:.5rem 0}
+.ck-hdr{padding:.42rem .85rem;font-size:.85rem;font-weight:700;color:#fff}
+.ck-row{display:flex;gap:.6rem;padding:.38rem .85rem;border-bottom:1px solid #EEF2F7;font-size:.82rem;align-items:flex-start}
+.ck-row:last-child{border-bottom:none}
+.ck-row:nth-child(even){background:var(--gray)}
+.ck-box{color:var(--teal);min-width:16px}
+/* Steps (dark) */
+.step-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.9rem;margin-bottom:.6rem}
+.step-num{font-size:1.05rem;font-weight:700;color:var(--amber);margin-bottom:.15rem}
+.step-box h4{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:.25rem}
+.step-box p{font-size:.81rem;color:#A0C4D8;line-height:1.4}
+/* Takeaway */
+.tkw{display:flex;align-items:flex-start;gap:.8rem;background:rgba(255,255,255,.06);border-radius:8px;padding:.8rem;margin-bottom:.55rem}
+.tkw .icon{font-size:1.4rem;min-width:26px;margin-top:.05rem}
+.tkw .title{font-size:.9rem;font-weight:700;color:var(--amber);margin-bottom:.15rem}
+.tkw .desc{font-size:.8rem;color:#A0C4D8;line-height:1.4}
+/* FAQ */
+.faq-row{border-bottom:1px solid #EEF2F7;padding:.58rem 0}
+.faq-row:last-child{border-bottom:none}
+.faq-q{font-size:.87rem;font-weight:600;color:var(--navy);margin-bottom:.22rem}
+.faq-a{font-size:.83rem;color:var(--mid);line-height:1.45}
+</style>
+</head>
+<body>
+<div class="deck" id="deck"></div>
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="go(-1)">← Indietro</button>
+  <div class="slide-counter" id="counter">1 / 17</div>
+  <div class="progress-dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="go(1)">Avanti →</button>
+</div>
+<script>
+const S = [
+
+// 1 Cover
+`<div class="slide s-cover">
+  <div class="l">⚠️</div>
+  <div class="r">
+    <span class="badge">MODULO 4</span>
+    <h1>Limiti, rischi, AI Act e uso responsabile dell'IA nella scuola</h1>
+    <div class="meta">Corso: Formare i formatori sull'IA nella scuola<br>Durata modulo: 4 ore &nbsp;|&nbsp; Impianto: Train the Trainers<br>Istituto Comprensivo – A.S. 2025/2026</div>
+  </div>
+</div>`,
+
+// 2 Obiettivi
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Obiettivi e struttura del modulo</h2>
+  <div class="sub">Il modulo più normativo del corso: dai rischi agli obblighi, dagli obblighi alla prassi</div>
+  <div class="info"><strong>Obiettivo:</strong> rendere i futuri formatori capaci di riconoscere e spiegare rischi, limiti, obblighi e condizioni di uso responsabile dell'IA nella scuola. L'AI literacy non è solo buona prassi: è <strong>obbligo normativo europeo</strong> per chi usa sistemi IA in contesti organizzativi.</div>
+  <div class="grid g4" style="margin-top:.75rem">
+    <div class="card"><div class="acc" style="background:#1A3560"></div><h4>01 · AI Act e obblighi</h4><p>Struttura, calendario, deployer, classificazione dei rischi, AI literacy come norma</p></div>
+    <div class="card"><div class="acc" style="background:#0D7C8F"></div><h4>02 · Rischi operativi</h4><p>Bias, allucinazioni, fonti inventate: tipologie, cause, impatto didattico</p></div>
+    <div class="card"><div class="acc" style="background:#5B4A8A"></div><h4>03 · Copyright e trasparenza</h4><p>Uso dichiarato, diritto d'autore, obblighi di trasparenza verso alunni e famiglie</p></div>
+    <div class="card"><div class="acc" style="background:#E8820C"></div><h4>04 · Checklist e TTT</h4><p>Controllo umano, privacy, cautele nel primo ciclo, discussioni critiche con i colleghi</p></div>
+  </div>
+  <div style="background:var(--amber);border-radius:6px;padding:.55rem 1rem;margin-top:.75rem;font-size:.85rem;font-weight:600;color:#fff">🔬 Laboratorio: Analisi critica di output IA + costruzione della checklist di conformità minima</div>
+</div></div>`,
+
+// 3 AI Act timeline
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>AI Act (Reg. UE 2024/1689): la mappa completa</h2>
+  <div class="sub">Struttura, calendario e obblighi per chi usa sistemi IA</div>
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-date">1° agosto 2024</div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding-top:.3rem"><div style="width:12px;height:12px;border-radius:50%;background:var(--teal)"></div><div style="width:3px;flex:1;background:rgba(13,124,143,.3);min-height:28px"></div></div>
+      <div class="tl-content"><h4>Entrata in vigore</h4><p>Il Regolamento UE 2024/1689 entra in vigore. Inizia il periodo di adeguamento progressivo.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date" style="color:#C62828">2 febbraio 2025</div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding-top:.3rem"><div style="width:12px;height:12px;border-radius:50%;background:#C62828"></div><div style="width:3px;flex:1;background:rgba(198,40,40,.3);min-height:28px"></div></div>
+      <div class="tl-content"><h4>AI literacy (art. 4) + pratiche vietate (art. 5)</h4><p>⬅ <strong>PER LA SCUOLA: l'obbligo di formare il personale è già in vigore.</strong> I sistemi a rischio inaccettabile sono già vietati.</p><span class="tag">✓ Già applicabile</span></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">2 agosto 2025</div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding-top:.3rem"><div style="width:12px;height:12px;border-radius:50%;background:var(--teal)"></div><div style="width:3px;flex:1;background:rgba(13,124,143,.3);min-height:28px"></div></div>
+      <div class="tl-content"><h4>Modelli IA per finalità generali (GPAI) + autorità nazionali</h4><p>Obblighi per provider di modelli fondazionali. Autorità nazionali di vigilanza operative.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">2 agosto 2026</div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding-top:.3rem"><div style="width:12px;height:12px;border-radius:50%;background:var(--teal)"></div><div style="width:3px;flex:1;background:rgba(13,124,143,.3);min-height:28px"></div></div>
+      <div class="tl-content"><h4>Piena applicabilità: sistemi ad alto rischio + trasparenza (art. 50)</h4><p>I sistemi IA ad alto rischio in uso richiedono registrazione, valutazione impatto, supervisione. I chatbot devono informare l'utente.</p></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">2 agosto 2027</div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding-top:.3rem"><div style="width:12px;height:12px;border-radius:50%;background:var(--teal)"></div></div>
+      <div class="tl-content"><h4>Sistemi ad alto rischio già in uso prima del 2026</h4><p>Periodo transitorio esteso per sistemi preesistenti.</p></div>
+    </div>
+  </div>
+</div></div>`,
+
+// 4 Deployer
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>La scuola come deployer: obblighi concreti</h2>
+  <div class="sub">Cosa cambia nella pratica quando la scuola adotta sistemi IA</div>
+  <div class="info"><strong>Deployer (art. 3, par. 4 AI Act):</strong> qualsiasi soggetto che utilizza un sistema IA sotto la propria responsabilità. La scuola che adotta ChatGPT, Quizizz o qualsiasi altro sistema IA è un deployer — con obblighi precisi.</div>
+  <div class="grid g3" style="margin-top:.65rem">
+    <div class="card" style="border-top:3px solid var(--red)">
+      <h4 style="color:var(--red)">Obbligo normativo</h4>
+      <ul class="pl">
+        <li>Garantire AI literacy adeguata al personale (art. 4 — <strong>già in vigore</strong>)</li>
+        <li>Non adottare sistemi IA a rischio inaccettabile (art. 5 — <strong>già vietati</strong>)</li>
+        <li>Per sistemi ad alto rischio: registrazione, valutazione impatto, supervisione (dal 2026)</li>
+        <li>Rispettare obblighi di trasparenza verso gli utenti (art. 50 — dal 2026)</li>
+        <li>Mantenere controllo umano significativo sulle decisioni rilevanti</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <h4 style="color:var(--teal)">Responsabilità pratica</h4>
+      <ul class="pl">
+        <li>Scegliere strumenti con consapevolezza della categoria di rischio</li>
+        <li>Verificare che il personale abbia competenze adeguate all'uso</li>
+        <li>Non adottare sistemi che violano diritti fondamentali (nessun social scoring)</li>
+        <li>Non adottare sistemi che valutano automaticamente gli studenti senza supervisione</li>
+        <li>Definire una policy d'istituto sull'uso dell'IA</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--green)">
+      <h4 style="color:var(--green)">Cosa NON richiede</h4>
+      <ul class="pl">
+        <li>Non richiede formazione tecnica informatica approfondita</li>
+        <li>Non richiede che tutti i docenti usino l'IA</li>
+        <li>Non richiede autorizzazione ministeriale per ogni strumento</li>
+        <li>Non richiede sviluppo di sistemi IA proprietari</li>
+        <li>Non equivale a responsabilità per errori del sistema IA in sé</li>
+      </ul>
+    </div>
+  </div>
+</div></div>`,
+
+// 5 Risk classification
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>La classificazione del rischio nell'AI Act</h2>
+  <div class="sub">Quattro livelli: da inaccettabile a minimo</div>
+  <div class="risk-box"><div class="risk-hdr" style="background:#B71C1C">RISCHIO INACCETTABILE — Sistemi vietati dal 2 febbraio 2025</div>
+    <div class="risk-body" style="background:#FFEBEE"><ul class="pl">
+      <li>Social scoring basato su IA (valutazione delle persone per comportamento)</li>
+      <li>Manipolazione subliminale che mette a rischio la salute</li>
+      <li>Sfruttamento delle vulnerabilità (bambini, anziani, disabili)</li>
+      <li>Riconoscimento biometrico in tempo reale in spazi pubblici (con eccezioni)</li>
+    </ul></div>
+  </div>
+  <div class="risk-box"><div class="risk-hdr" style="background:#C62828">RISCHIO ALTO — Obblighi rafforzati, applicabili dal 2026</div>
+    <div class="risk-body" style="background:#FFF3F3"><ul class="pl">
+      <li><strong>Sistemi IA per ammissioni, valutazioni o orientamento degli studenti</strong> (Allegato III, punto 3b)</li>
+      <li>Infrastrutture critiche, forze dell'ordine, accesso a servizi essenziali</li>
+      <li>Sistemi per selezione del personale</li>
+      <li>Amministrazione della giustizia</li>
+    </ul></div>
+  </div>
+  <div class="risk-box"><div class="risk-hdr" style="background:#E8820C">RISCHIO LIMITATO — Obbligo di trasparenza (art. 50) dal 2026</div>
+    <div class="risk-body" style="background:#FFF8E7"><ul class="pl">
+      <li>Chatbot: l'utente deve sapere che sta interagendo con un'IA</li>
+      <li>Deepfake e contenuti generati da IA: etichettatura obbligatoria</li>
+      <li>Riconoscimento delle emozioni: comunicazione agli utenti</li>
+    </ul></div>
+  </div>
+  <div class="risk-box"><div class="risk-hdr" style="background:#2E7D32">RISCHIO MINIMO O NULLO — Nessun obbligo specifico (salvo art. 4 per i deployer)</div>
+    <div class="risk-body" style="background:#F0FAF4"><ul class="pl">
+      <li>Filtri anti-spam, strumenti di produttività, raccomandazioni di contenuti</li>
+      <li><strong>La maggior parte degli usi che i docenti fanno di ChatGPT per preparare materiali</strong></li>
+      <li>Giochi IA, sistemi di navigazione, traduzione automatica</li>
+    </ul></div>
+  </div>
+</div></div>`,
+
+// 6 Risk mapping school tools
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Quale rischio per gli strumenti usati a scuola?</h2>
+  <div class="sub">Mappare lo scenario del proprio istituto</div>
+  <div class="warn"><strong>⚠ Attenzione:</strong> un sistema IA per valutare studenti o decidere ammissioni in modo automatizzato rientra nell'alto rischio (Allegato III, punto 3b). I chatbot generativi usati dai docenti per preparare materiali sono invece rischio minimo.</div>
+  <table class="tbl tbl-risk">
+    <tr><th>Strumento / uso</th><th>Scenario</th><th>Livello rischio</th><th>Implicazioni</th></tr>
+    <tr><td>ChatGPT / Gemini / Copilot</td><td>Docente prepara materiali, bozze, domande</td><td><span class="risk-min">Minimo</span></td><td>Obbligo art. 4 (AI literacy). Nessun altro obbligo specifico.</td></tr>
+    <tr><td>ChatGPT per analizzare risposte alunni</td><td>Docente usa output per orientare didattica</td><td><span class="risk-lim">Minimo → Limitato</span></td><td>Art. 50 (trasparenza) dal 2026. Dati alunni: GDPR.</td></tr>
+    <tr><td>Piattaforma IA per valutare competenze</td><td>Algoritmo assegna punteggi o livelli in modo automatico</td><td><span class="risk-alt">ALTO RISCHIO</span></td><td>Allegato III. Registrazione, valutazione impatto, supervisione obbligatoria (dal 2026).</td></tr>
+    <tr><td>Sistema IA per ammissioni o orientamento</td><td>Algoritmo raccomanda percorsi o scuole</td><td><span class="risk-alt">ALTO RISCHIO</span></td><td>Allegato III, punto 3b. Nessun uso automatizzato senza supervisione umana.</td></tr>
+    <tr><td>Quizizz / quiz con IA generativa</td><td>Docente assegna e corregge. IA genera domande.</td><td><span class="risk-min">Minimo</span></td><td>Uso docente: nessun obbligo specifico. Con dati alunni: GDPR da verificare.</td></tr>
+    <tr><td>Strumenti di riconoscimento emozioni</td><td>Rilevare stati emotivi degli alunni</td><td><span class="risk-viet">ALTO / Vietato</span></td><td>In classe con bambini: rischio altissimo. Verificare art. 5 (pratiche vietate).</td></tr>
+  </table>
+</div></div>`,
+
+// 7 Bias
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Bias algoritmici: tipologie, cause e impatto nella scuola</h2>
+  <div class="sub">Riconoscerli per spiegarli ai colleghi</div>
+  <table class="tbl">
+    <tr><th style="width:26%">Tipo di bias</th><th style="width:36%">Esempio concreto</th><th>Causa e impatto didattico</th></tr>
+    <tr><td><strong>Bias di genere</strong></td><td>«Descrivi un buon dirigente scolastico» → output prevalentemente maschile</td><td>Il sistema associa certi ruoli a un genere specifico. Materiali didattici con bias rinforzano stereotipi negli alunni.</td></tr>
+    <tr><td><strong>Bias culturale</strong></td><td>«Descrivi una famiglia tipica» → struttura nucleare occidentale, altre culture ignorate</td><td>Sovrarappresentazione della prospettiva occidentale nei dati di addestramento. Rischio di etnocentrismo nei materiali.</td></tr>
+    <tr><td><strong>Bias linguistico</strong></td><td>Terminologia pedagogica italiana spesso approssimativa; nomi di correnti, metodi, normative italiani resi in modo impreciso</td><td>Qualità dell'output nettamente superiore in inglese. Possibili imprecisioni tecniche in italiano, specie in ambito normativo.</td></tr>
+    <tr><td><strong>Bias di selezione</strong></td><td>«Esempi di scienziati famosi» → uomini, bianchi, occidentali in proporzione maggiore</td><td>Riflette la sovrarappresentazione di certi gruppi nelle fonti di addestramento. Curricolo implicito non intenzionale.</td></tr>
+    <tr><td><strong>Bias di conferma</strong></td><td>«Scrivi di uno studente difficile» → output può riflettere stereotipi sociali o etnici</td><td>Il modello associa certi tipi di "difficoltà" a certi profili di alunno. Da rilevare e correggere prima dell'uso.</td></tr>
+  </table>
+  <div class="info"><strong>Come spiegarlo ai colleghi:</strong> far produrre all'IA descrizioni di ruoli professionali e analizzare insieme i risultati. È l'esercizio più efficace per creare consapevolezza — senza teoria.</div>
+</div></div>`,
+
+// 8 Allucinazioni
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Allucinazioni: dal fenomeno alla strategia</h2>
+  <div class="sub">Tipologie, cause strutturali e come trasformarle in didattica critica</div>
+  <div class="info"><strong>Allucinazione:</strong> output IA che contiene informazioni false presentate con la stessa sicurezza di quelle vere. Non è un bug: è una caratteristica strutturale degli LLM, che predicono la parola più probabile senza verificare i fatti.</div>
+  <table class="tbl">
+    <tr><th style="width:48%">Tipologia (esempi documentati)</th><th>Come trasformarla in didattica critica</th></tr>
+    <tr><td>Citazioni bibliografiche inventate: autore, titolo, rivista, DOI, anno — tutto falso</td><td>Chiedere all'IA 5 fonti su un argomento → verificarle su Google Scholar: esercizio potente e memorabile</td></tr>
+    <tr><td>Date storiche errate o invertite</td><td>Usare le allucinazioni come spunto: «Cosa ci dice questo errore sul funzionamento dell'IA?»</td></tr>
+    <tr><td>Leggi, norme e articoli di legge inesistenti o con numero sbagliato</td><td>Far cercare agli alunni l'errore nell'output: pensiero critico applicato</td></tr>
+    <tr><td>Fatti scientifici presentati come consolidati ma non verificabili</td><td>Mostrare che l'IA sbaglia anche su contenuti di programma: motiva la verifica sistematica</td></tr>
+    <tr><td>Dati statistici inventati con apparente precisione</td><td>Collegare al concetto di fonte attendibile e alfabetizzazione informativa</td></tr>
+    <tr><td>Citazioni di personaggi reali che non le hanno mai pronunciate</td><td>Esercizio: «Chi ha detto questa frase?» → ricerca → l'IA l'ha inventata</td></tr>
+  </table>
+</div></div>`,
+
+// 9 Copyright
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Copyright e IA generativa</h2>
+  <div class="sub">Una zona grigia che i formatori devono saper spiegare</div>
+  <div class="faq-row">
+    <div class="faq-q">D: Gli output dell'IA sono protetti da diritto d'autore?</div>
+    <div class="faq-a">R: In Italia e in UE: <strong>generalmente no</strong>. Il diritto d'autore richiede un autore umano con attività creativa. Un output generato interamente dall'IA senza contributo creativo umano significativo non è protetto. (L. 633/1941; posizione in evoluzione.)</div>
+  </div>
+  <div class="faq-row">
+    <div class="faq-q">D: L'IA può aver violato copyright nei dati di addestramento?</div>
+    <div class="faq-a">R: Possibile. I modelli IA sono stati addestrati su miliardi di testi, spesso senza licenza esplicita. In UE si applica l'eccezione di <em>text and data mining</em> (Dir. 2019/790), con limiti. Il dibattito legale è aperto.</div>
+  </div>
+  <div class="faq-row">
+    <div class="faq-q">D: Posso usare output IA per materiali didattici?</div>
+    <div class="faq-a">R: <strong>Sì, con cautela:</strong> verificare che l'output non riproduca testualmente testi protetti. L'output IA può contenere frammenti di testi originali (problema di memorizzazione). Preferire rielaborazione critica a copia diretta.</div>
+  </div>
+  <div class="faq-row">
+    <div class="faq-q">D: Devo dichiarare l'uso dell'IA?</div>
+    <div class="faq-a">R: Come buona prassi professionale: <strong>sì, sempre</strong>. Come obbligo normativo: dal 2026 l'art. 50 AI Act richiederà etichettatura dei contenuti generati da IA. Alcune policy d'istituto già lo prevedono.</div>
+  </div>
+  <div class="faq-row" style="border-bottom:none">
+    <div class="faq-q">D: Gli alunni possono usare IA per i compiti?</div>
+    <div class="faq-a">R: Dipende dalla policy d'istituto e dalle indicazioni del docente. Non è un divieto di legge in senso stretto. È una questione di valutazione dell'apprendimento: <strong>il docente decide cosa valuta e come</strong>.</div>
+  </div>
+</div></div>`,
+
+// 10 Trasparenza
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Trasparenza e uso dichiarato dell'IA</h2>
+  <div class="sub">Un obbligo professionale oggi, normativo dal 2026</div>
+  <div class="info"><strong>Art. 50 AI Act (dal 2026):</strong> chi mette in funzione un chatbot deve informare l'utente che sta interagendo con un'IA. I contenuti generati da IA (testi, immagini, audio) dovranno essere etichettati.</div>
+  <div class="grid g2" style="margin-top:.65rem">
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <h4>📢 Dichiarare l'uso ai colleghi</h4>
+      <p>Quando si usano materiali preparati con IA nella formazione interna, dirlo. Modella il comportamento professionale che si vuole diffondere.</p>
+      <p style="margin-top:.4rem;font-style:italic;color:var(--teal);font-size:.79rem">«Questo schema l'ho generato con ChatGPT e poi rivisto: ecco come.»</p>
+    </div>
+    <div class="card" style="border-top:3px solid #5B4A8A">
+      <h4>📋 Dichiarare l'uso agli alunni</h4>
+      <p>Se si usa output IA in classe (Livello 2 – uso mediato), dichiararlo: è un'opportunità didattica, non una debolezza.</p>
+      <p style="margin-top:.4rem;font-style:italic;color:#5B4A8A;font-size:.79rem">«Ho usato ChatGPT per preparare questa scheda: vediamo insieme se ha fatto errori.»</p>
+    </div>
+    <div class="card" style="border-top:3px solid var(--navy)">
+      <h4>🏫 Policy d'istituto sull'uso dichiarato</h4>
+      <p>Il formatore interno ha un ruolo chiave nel proporre che la policy d'istituto includa indicazioni su come e quando dichiarare l'uso dell'IA, sia ai colleghi che agli alunni e alle famiglie.</p>
+    </div>
+    <div class="card" style="border-top:3px solid var(--red)">
+      <h4>⚠ Cosa non fare: la trasparenza selettiva</h4>
+      <p>Dichiarare l'uso dell'IA solo quando conveniente erode la fiducia. La trasparenza deve essere sistematica, non tattica — altrimenti diventa un rischio reputazionale per l'istituto.</p>
+    </div>
+  </div>
+</div></div>`,
+
+// 11 Controllo umano
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Il controllo umano: non è negoziabile</h2>
+  <div class="sub">Perché e come mantenerlo in ogni contesto d'uso</div>
+  <div class="info"><strong>Principio fondamentale dell'AI Act:</strong> i sistemi IA devono essere usati in modo da consentire la supervisione e l'intervento umano. Il controllo umano non è una formalità burocratica: è il presupposto giuridico ed etico di ogni uso responsabile.</div>
+  <div class="grid g3" style="margin-top:.65rem">
+    <div class="card" style="border-top:3px solid var(--green)">
+      <h4 style="color:var(--green)">✓ Cosa significa in pratica</h4>
+      <ul class="pl">
+        <li>Leggere ogni output prima di usarlo</li>
+        <li>Verificare fatti, fonti e dati indipendentemente</li>
+        <li>Non consegnare mai output non rivisto agli alunni</li>
+        <li>Il giudizio valutativo è sempre del docente</li>
+        <li>Distinguere tra supporto (IA prepara) e decisione (docente sceglie)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--red)">
+      <h4 style="color:var(--red)">✗ Quando il controllo è solo apparente</h4>
+      <ul class="pl">
+        <li>«Poi controllo io» — ma non si verifica mai realmente</li>
+        <li>Usare l'output perché «sembra giusto» senza verificare</li>
+        <li>Far correggere elaborati all'IA e accettarne il feedback senza revisione</li>
+        <li>Delegare la scelta degli strumenti all'IA stessa</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <h4 style="color:var(--teal)">💡 Come insegnarlo ai colleghi</h4>
+      <ul class="pl">
+        <li>Mostrare un caso di allucinazione in diretta: crea consapevolezza immediata</li>
+        <li>La checklist di revisione (8 punti da M2) è lo strumento del controllo</li>
+        <li>«Il momento in cui decidi cosa tenere è il tuo contributo professionale»</li>
+        <li>Collegare al quadro normativo: AI Act + D.lgs. 62/2017 sulla valutazione</li>
+      </ul>
+    </div>
+  </div>
+</div></div>`,
+
+// 12 Privacy sintesi
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Privacy: sintesi operativa per la scuola</h2>
+  <div class="sub">Tre livelli di rischio, tre regole pratiche</div>
+  <div class="info">GDPR + AI Act + D.M. 166/2025 disegnano insieme un quadro chiaro: il docente che usa IA a scuola non deve essere un esperto legale, ma deve conoscere queste tre regole di base.</div>
+  <div class="grid" style="grid-template-columns:1fr;gap:.55rem;margin-top:.6rem">
+    <div class="card" style="border-left:5px solid var(--red)">
+      <h4>REGOLA 1 — Nessun dato personale degli alunni nei prompt</h4>
+      <div class="grid g2" style="margin-top:.3rem;gap:.4rem">
+        <div style="background:#FFEBEE;border-radius:6px;padding:.45rem .7rem;font-size:.8rem;color:#B71C1C">✗ «Mario Rossi, classe IV A dell'IC Manzoni, diagnosi di dislessia del 2023»</div>
+        <div style="background:#F0FAF4;border-radius:6px;padding:.45rem .7rem;font-size:.8rem;color:#1B5E20">✓ «Un alunno con dislessia certificata, 10 anni, classe IV primaria»</div>
+      </div>
+    </div>
+    <div class="card" style="border-left:5px solid var(--amber)">
+      <h4>REGOLA 2 — Età minima in Italia: 14 anni</h4>
+      <p>Il consenso al trattamento dati per servizi digitali in Italia è fissato a <strong>14 anni</strong> (art. 2-quinquies, D.Lgs. 101/2018). Per under 14: consenso obbligatorio del genitore. La maggior parte dei chatbot fissa 13 anni (COPPA/USA): la norma italiana è più restrittiva.</p>
+    </div>
+    <div class="card" style="border-left:5px solid var(--teal)">
+      <h4>REGOLA 3 — Minimizzazione: inserire solo ciò che è necessario</h4>
+      <p>Un prompt didattico efficace quasi mai ha bisogno di dati personali reali. La domanda-filtro: «Se questo testo finisse su un server pubblico, qualcuno riconoscerebbe un alunno del mio istituto?» Se sì, riformulare.</p>
+    </div>
+  </div>
+</div></div>`,
+
+// 13 Primo ciclo
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Cautele specifiche per il primo ciclo</h2>
+  <div class="sub">Infanzia, primaria e secondaria di I grado: una fascia ad alta tutela</div>
+  <div class="info">I minori sono soggetti vulnerabili per definizione (AI Act art. 5; GDPR; UNESCO AI Competency Framework; UNICEF 2025). Le cautele nel primo ciclo devono essere più stringenti rispetto a scuola secondaria di II grado e università.</div>
+  <div class="grid g3">
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <h4>Infanzia (3–6 anni)</h4>
+      <ul class="pl">
+        <li>Zero uso diretto da parte dei bambini: l'IA è sempre uno strumento del docente</li>
+        <li>Nessun account, nessuna interfaccia IA davanti ai bambini</li>
+        <li>L'IA supporta la progettazione dell'educatrice: attività, osservazioni, materiali</li>
+        <li>Attenzione alla rappresentazione: i materiali non devono contenere bias su genere, famiglia, etnia</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--green)">
+      <h4>Primaria (6–11 anni)</h4>
+      <ul class="pl">
+        <li>Uso mediato (Livello 2) raccomandato: docente gestisce l'IA, bambini osservano e discutono</li>
+        <li>Uso diretto (Livello 3): solo con DPA firmato, consenso famiglie, età ≥ 13 anni</li>
+        <li>Nessun account personale di minori su chatbot generativi</li>
+        <li>I giudizi sintetici (O.M. 3/2025) non si delegano mai all'IA: processo collegiale</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--amber)">
+      <h4>Secondaria I grado (11–14 anni)</h4>
+      <ul class="pl">
+        <li>Livello 2 (mediato) ancora preferibile; Livello 3 possibile con condizioni documentate</li>
+        <li>I 13-14enni sono sotto la soglia di consenso autonomo (14 anni in Italia): consenso genitore per account</li>
+        <li>Uso dichiarato dell'IA come opportunità educativa: alfabetizzazione critica</li>
+        <li>Valutazione con IA: mai automatizzata, mai senza revisione del docente</li>
+      </ul>
+    </div>
+  </div>
+</div></div>`,
+
+// 14 Checklist conformità
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>La checklist di conformità minima</h2>
+  <div class="sub">Il prodotto principale del Modulo 4: uno strumento operativo per l'istituto</div>
+  <div class="info"><strong>Questa checklist si applica ogni volta che si adotta o consiglia un nuovo strumento IA nell'istituto.</strong> Non è burocrazia: è una tutela per il docente, gli alunni e l'istituzione.</div>
+  <div class="grid g2" style="margin-top:.6rem">
+    <div class="ck-section">
+      <div class="ck-hdr" style="background:var(--navy)">☐ NORMATIVA</div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Lo strumento appartiene a quale categoria di rischio AI Act?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>L'istituto ha già adottato misure di AI literacy (art. 4)?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Ci sono sistemi IA ad alto rischio in uso che richiedono registrazione?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Esiste o è in costruzione una policy d'istituto sull'IA?</span></div>
+    </div>
+    <div class="ck-section">
+      <div class="ck-hdr" style="background:var(--teal)">☐ USO RESPONSABILE</div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Il docente mantiene controllo e revisione su ogni output?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>I bias e le allucinazioni sono stati spiegati al personale?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>L'uso dell'IA è dichiarato (alunni, famiglie, colleghi)?</span></div>
+    </div>
+    <div class="ck-section">
+      <div class="ck-hdr" style="background:var(--red)">☐ PRIVACY</div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Esiste un DPA firmato con il provider?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>I server sono in UE o ci sono SCCs per trasferimento extra-UE?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>L'età minima è rispettata per tutti gli alunni coinvolti?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Il DPO è stato consultato (per uso con dati alunni)?</span></div>
+    </div>
+    <div class="ck-section">
+      <div class="ck-hdr" style="background:var(--purple)">☐ DIDATTICA</div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Il livello d'uso è appropriato (docente/mediato/diretto)?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>Lo strumento ha un obiettivo didattico specifico e verificabile?</span></div>
+      <div class="ck-row"><span class="ck-box">☐</span><span>I materiali prodotti con IA vengono revisionati prima dell'uso in classe?</span></div>
+    </div>
+  </div>
+</div></div>`,
+
+// 15 Focus TTT
+`<div class="slide s-content"><div class="bar-top"></div><div class="bar-left"></div><div class="inner">
+  <h2>Focus Train the Trainers: guidare discussioni critiche</h2>
+  <div class="sub">Come trasformare la normativa in conversazione professionale</div>
+  <div class="info">M4 è il modulo dove i partecipanti imparano a guidare discussioni difficili — non a dare risposte preconfezionate. I colleghi arriveranno con resistenze, dubbi e confusione normativa: il formatore deve saper tenere il punto.</div>
+  <div class="grid g2" style="margin-top:.65rem">
+    <div class="card" style="border-left:4px solid var(--teal)"><h4>1. Inizia con lo scenario, non con la norma</h4><p>Presenta un caso concreto («Un collega ha caricato i temi con i nomi degli alunni su ChatGPT») e poi costruisci insieme perché è problematico. La norma diventa senso, non burocrazia.</p></div>
+    <div class="card" style="border-left:4px solid var(--teal)"><h4>2. Separa l'ignoranza dalla malafede</h4><p>La maggior parte dei colleghi non conosce l'AI Act o il GDPR applicato all'IA. Trattare ogni errore come lacuna formativa crea collaborazione. Trattarlo come malafede aliena.</p></div>
+    <div class="card" style="border-left:4px solid var(--teal)"><h4>3. Usa la coppia rischio/beneficio</h4><p>Per ogni limite presentato, mostra l'uso legittimo corrispondente. «Non si caricano compiti nominativi — ma si può lavorare su testi anonimizzati.» Vincolo e alternativa sempre insieme.</p></div>
+    <div class="card" style="border-left:4px solid var(--teal)"><h4>4. Tieni un appiglio normativo concreto</h4><p>Non basta «è buona prassi». Citare art. 4 AI Act (già in vigore dal 2 febbraio 2025) e GDPR / 14 anni in Italia dà al formatore credibilità e non opinabilità.</p></div>
+    <div class="card" style="border-left:4px solid var(--teal)"><h4>5. Distingui il "non puoi" dal "non dovresti"</h4><p>Alcuni usi sono vietati (elaborati nominativi, delega valutativa, sistemi di emotion recognition). Altri sono sconsigliati ma non vietati. La distinzione ha peso nei confronti dei colleghi più resistenti.</p></div>
+    <div class="card" style="border-left:4px solid var(--teal)"><h4>6. Porta la checklist come strumento, non come giudizio</h4><p>La checklist di conformità non è una lista di controllo punitiva: è una tutela per il docente. Presentarla così cambia la relazione formativa.</p></div>
+  </div>
+</div></div>`,
+
+// 16 Lab (dark)
+`<div class="slide s-dark"><div class="bar-top"></div><div class="bar-bot"></div><div class="inner">
+  <div style="font-size:.75rem;font-weight:700;color:var(--amber);letter-spacing:.1em;margin-bottom:.7rem">LABORATORIO M4</div>
+  <h2 style="font-size:1.45rem;margin-bottom:1rem">Analisi critica di output IA + checklist di conformità minima</h2>
+  <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.87rem;color:#A0C4D8;font-style:italic">Obiettivo: saper individuare autonomamente problemi in output IA e costruire la checklist da usare come strumento di accompagnamento per i colleghi.</div>
+  <div class="grid g2" style="gap:.6rem">
+    <div class="step-box"><div class="step-num">01</div><h4>Analisi output (25 min)</h4><p>In gruppi da 3: analizzare 4 output IA forniti nella scheda laboratorio. Per ciascuno: identificare bias, allucinazioni, errori fattuali, problemi privacy, contenuti fuori livello, fonti deboli.</p></div>
+    <div class="step-box"><div class="step-num">02</div><h4>Costruzione checklist (20 min)</h4><p>Individualmente: costruire la propria versione della checklist di conformità minima, a partire dallo schema presentato. Aggiungere almeno 2 voci specifiche per il proprio istituto.</p></div>
+    <div class="step-box"><div class="step-num">03</div><h4>Simulazione TTT (20 min)</h4><p>A coppie: simulare una discussione con un collega che vuole «caricare i compiti su ChatGPT per farli correggere». Applicare le 6 strategie di accompagnamento.</p></div>
+    <div class="step-box"><div class="step-num">04</div><h4>Validazione plenaria (25 min)</h4><p>Confronto delle checklist prodotte. Costruzione della versione comune dell'istituto. Feedback sulle simulazioni: quali strategie TTT hanno funzionato meglio e perché.</p></div>
+  </div>
+</div></div>`,
+
+// 17 Sintesi (dark)
+`<div class="slide s-dark"><div class="bar-top"></div><div class="bar-bot"></div><div class="inner">
+  <div style="font-size:.75rem;font-weight:700;color:var(--teal);letter-spacing:.1em;margin-bottom:.5rem">SINTESI DEL MODULO 4</div>
+  <h2 style="margin-bottom:1rem">Cosa portate a casa</h2>
+  <div class="tkw"><div class="icon">⚖️</div><div><div class="title">Il quadro normativo completo</div><div class="desc">AI Act, calendario, deployer, rischi: la mappa che trasforma la norma in guida operativa per l'istituto</div></div></div>
+  <div class="tkw"><div class="icon">🔍</div><div><div class="title">Bias, allucinazioni, copyright</div><div class="desc">Tipologie, cause e strategie didattiche per spiegarli ai colleghi e trasformarli in opportunità di apprendimento critico</div></div></div>
+  <div class="tkw"><div class="icon">📢</div><div><div class="title">Trasparenza e controllo umano</div><div class="desc">Uso dichiarato, supervisione professionale: i due principi che rendono ogni uso dell'IA giuridicamente ed eticamente difendibile</div></div></div>
+  <div class="tkw"><div class="icon">🔒</div><div><div class="title">Privacy e cautele nel primo ciclo</div><div class="desc">Le tre regole pratiche GDPR + cautele per infanzia, primaria e secondaria di I grado</div></div></div>
+  <div class="tkw"><div class="icon">✓</div><div><div class="title">La checklist di conformità minima</div><div class="desc">Quarta componente del kit del formatore: strumento operativo pronto per accompagnare i colleghi nella scelta e nell'uso responsabile degli strumenti IA</div></div></div>
+</div></div>`
+
+];
+
+const deck=document.getElementById('deck'), dotsEl=document.getElementById('dots');
+let cur=0;
+S.forEach(h=>{const d=document.createElement('div');d.innerHTML=h;deck.appendChild(d.firstElementChild);});
+S.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' current':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);});
+function goTo(n){
+  const sls=deck.querySelectorAll('.slide'),dts=dotsEl.querySelectorAll('.dot');
+  sls[cur].classList.remove('active');dts[cur].classList.remove('current');dts[cur].classList.add('done');
+  cur=n;sls[cur].classList.add('active');dts[cur].classList.remove('done');dts[cur].classList.add('current');
+  document.getElementById('counter').textContent=(cur+1)+' / '+S.length;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('nextBtn').disabled=cur===S.length-1;
+}
+function go(d){if(cur+d>=0&&cur+d<S.length)goTo(cur+d);}
+goTo(0);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(1);if(e.key==='ArrowLeft')go(-1);});
+</script>
+</body>
+</html>

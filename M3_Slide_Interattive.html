@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M3 – Valutazione formativa con IA | Slide interattive</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#1A3560;--teal:#0D7C8F;--amber:#E8820C;--light:#EAF3F7;--gray:#F4F6F8;--white:#ffffff;--dark:#1E1E1E;--mid:#4A5568;--cap:#718096}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#0f1e35}
+.deck{width:100%;height:100vh;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .35s}
+.slide.active{display:flex;opacity:1}
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(26,53,96,.92);backdrop-filter:blur(8px);display:flex;align-items:center;padding:.5rem 1.5rem;gap:1rem;z-index:100;height:48px}
+.nav-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:.3rem .9rem;border-radius:6px;cursor:pointer;font-size:.82rem;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,.15)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.slide-counter{color:rgba(255,255,255,.6);font-size:.82rem;margin:0 auto}
+.progress-dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:300px}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s;cursor:pointer}
+.dot.done{background:rgba(255,255,255,.5)}
+.dot.current{background:var(--amber);transform:scale(1.3)}
+.s-cover{background:var(--navy);display:flex;flex-direction:row}
+.s-cover .left-panel{width:32%;background:var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+.s-cover .left-panel .icon{font-size:5rem;margin-bottom:1rem}
+.s-cover .right-panel{flex:1;padding:2.5rem 3rem;display:flex;flex-direction:column;justify-content:center}
+.s-cover .mod-badge{display:inline-block;background:var(--amber);color:#fff;font-size:.75rem;font-weight:700;padding:.3rem .9rem;border-radius:20px;letter-spacing:.08em;margin-bottom:1rem;align-self:flex-start}
+.s-cover h1{font-size:2.2rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:1.5rem}
+.s-cover .meta{font-size:.9rem;color:#A0C4D8;line-height:1.8}
+.s-content{background:var(--white);padding:0 0 48px}
+.s-content .top-bar{height:6px;background:var(--navy)}
+.s-content .accent-bar{width:5px;position:fixed;left:0;top:6px;bottom:48px;background:var(--amber)}
+.s-content .inner{padding:1.5rem 2rem 1rem 2.5rem;flex:1;overflow-y:auto}
+.s-content h2{font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:.25rem}
+.s-content .subtitle{font-size:.9rem;color:var(--teal);font-style:italic;margin-bottom:1.25rem}
+.s-dark{background:var(--navy);padding:0 0 48px}
+.s-dark .top-bar{height:4px;background:var(--teal)}
+.s-dark .bot-bar{position:fixed;bottom:48px;left:0;right:0;height:4px;background:var(--amber)}
+.s-dark .inner{padding:1.5rem 2rem;flex:1;overflow-y:auto;color:#fff}
+.s-dark h2{font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:.25rem}
+.info-box{background:var(--light);border-left:4px solid var(--teal);padding:.85rem 1rem;border-radius:0 8px 8px 0;margin:.75rem 0;font-size:.88rem;color:var(--dark);line-height:1.5}
+.info-box strong{color:var(--navy)}
+.warn-box{background:#FFF3E0;border-left:4px solid var(--amber);padding:.85rem 1rem;border-radius:0 8px 8px 0;margin:.75rem 0;font-size:.88rem;color:#7A4000;line-height:1.5}
+.card-grid{display:grid;gap:.75rem;margin:.75rem 0}
+.card-grid.cols-2{grid-template-columns:1fr 1fr}
+.card-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.card{background:#fff;border:1px solid #DDE3EA;border-radius:8px;padding:.85rem;position:relative;overflow:hidden}
+.card .card-accent{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card h4{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:.35rem}
+.card p,.card li{font-size:.82rem;color:var(--mid);line-height:1.45}
+table.compare{width:100%;border-collapse:collapse;font-size:.82rem;margin:.75rem 0}
+table.compare th{background:var(--navy);color:#fff;padding:.5rem .65rem;text-align:left;font-weight:600}
+table.compare td{padding:.45rem .65rem;border-bottom:1px solid #EEF2F7;vertical-align:top}
+table.compare tr:nth-child(even) td{background:var(--gray)}
+ul.plain-list{margin:.5rem 0;padding-left:1.2rem}
+ul.plain-list li{font-size:.86rem;color:var(--dark);margin-bottom:.4rem;line-height:1.45}
+.step-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:1rem;margin-bottom:.65rem}
+.step-box .step-num{font-size:1.1rem;font-weight:700;color:var(--amber);margin-bottom:.2rem}
+.step-box h4{font-size:.9rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.step-box p{font-size:.82rem;color:#A0C4D8;line-height:1.4}
+.takeaway-item{display:flex;align-items:flex-start;gap:.85rem;background:rgba(255,255,255,.06);border-radius:8px;padding:.85rem;margin-bottom:.6rem}
+.takeaway-item .ti-icon{font-size:1.5rem;color:var(--amber);min-width:28px;margin-top:.1rem}
+.takeaway-item .ti-title{font-size:.92rem;font-weight:700;color:var(--amber);margin-bottom:.2rem}
+.takeaway-item .ti-text{font-size:.82rem;color:#A0C4D8;line-height:1.4}
+.scenario{border:1px solid #DDE3EA;border-radius:8px;padding:.85rem 1rem;margin-bottom:.7rem;background:var(--gray)}
+.scenario .sc-quote{font-size:.9rem;font-style:italic;color:var(--navy);margin-bottom:.4rem;line-height:1.45}
+.scenario .sc-hint{font-size:.82rem;color:var(--mid);line-height:1.4}
+.scenario .sc-hint strong{color:var(--amber)}
+</style>
+</head>
+<body>
+<div class="deck" id="deck"></div>
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="go(-1)">← Indietro</button>
+  <div class="slide-counter" id="counter">1 / 17</div>
+  <div class="progress-dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="go(1)">Avanti →</button>
+</div>
+<script>
+const slides = [
+  // 1 Cover
+  `<div class="slide s-cover">
+    <div class="left-panel"><div class="icon">📊</div></div>
+    <div class="right-panel">
+      <span class="mod-badge">MODULO 3</span>
+      <h1>IA per valutazione formativa, feedback e personalizzazione</h1>
+      <div class="meta">
+        Corso: Formare i formatori sull'IA nella scuola<br>
+        Durata modulo: 4 ore &nbsp;|&nbsp; Impianto: Train the Trainers<br>
+        Istituto Comprensivo – A.S. 2025/2026
+      </div>
+    </div>
+  </div>`,
+
+  // 2 Obiettivi
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Obiettivi e struttura del modulo</h2>
+      <div class="subtitle">Cosa impareremo e come è organizzato M3</div>
+      <div class="info-box"><strong>Obiettivo formativo:</strong> usare l'IA come supporto alla valutazione formativa, alla produzione di feedback e alla personalizzazione, mantenendo il controllo professionale del docente.</div>
+      <div class="card-grid cols-2" style="margin-top:.85rem">
+        <div class="card"><div class="card-accent" style="background:#1A3560"></div><h4>01 · Il confine fondamentale</h4><p>Supporto alla valutazione formativa vs delega impropria della valutazione</p></div>
+        <div class="card"><div class="card-accent" style="background:#0D7C8F"></div><h4>02 · Sei aree operative</h4><p>Rubriche, feedback, domande diagnostiche, exit ticket, recupero/potenziamento, BES e DSA</p></div>
+        <div class="card"><div class="card-accent" style="background:#5B4A8A"></div><h4>03 · Privacy dei dati di valutazione</h4><p>Cosa non caricare mai: elaborati nominativi, PDP/PEI, dati di scrutinio</p></div>
+        <div class="card"><div class="card-accent" style="background:#E8820C"></div><h4>04 · Focus Trainer</h4><p>Come rispondere ai colleghi che chiedono aiuto sulla valutazione con IA</p></div>
+      </div>
+      <div style="background:var(--amber);border-radius:6px;padding:.6rem 1rem;margin-top:.85rem;font-size:.85rem;font-weight:600;color:#fff">🔬 Laboratorio: Analisi di scenari e costruzione del modello di accompagnamento per i colleghi</div>
+    </div>
+  </div>`,
+
+  // 3 Quadro normativo
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>La valutazione nel primo ciclo: il quadro normativo vigente</h2>
+      <div class="subtitle">Cosa è cambiato e cosa resta: la base per ogni discorso sull'IA</div>
+      <table class="compare">
+        <tr><th style="width:26%">Ambito</th><th style="width:30%">Norma</th><th>Cosa prevede</th></tr>
+        <tr><td><strong>Primaria – apprendimenti</strong></td><td>L. 150/2024 + O.M. 3 del 9/1/2025</td><td>Giudizi sintetici (Ottimo → Non sufficiente) con descrizione dei livelli raggiunti. Sostituiscono i livelli descrittivi dell'O.M. 172/2020 dall'ultimo periodo dell'a.s. 2024/25.</td></tr>
+        <tr><td><strong>Secondaria I grado – apprendimenti</strong></td><td>D.lgs. 62/2017</td><td>Voti in decimi. Invariato dalla riforma 2024.</td></tr>
+        <tr><td><strong>Secondaria I grado – comportamento</strong></td><td>L. 150/2024 + O.M. 3/2025</td><td>Valutazione del comportamento rivista in ottica educativa, con giudizio sintetico.</td></tr>
+        <tr><td><strong>Valutazione formativa (in itinere)</strong></td><td>D.lgs. 62/2017, art. 1</td><td>La valutazione «ha finalità formativa ed educativa, concorre al miglioramento degli apprendimenti». <strong>È QUI che l'IA può dare supporto.</strong></td></tr>
+      </table>
+      <div class="info-box"><strong>Punto chiave per M3:</strong> la responsabilità della valutazione resta dei docenti (D.lgs. 62/2017). Nessuna norma consente di delegarla a uno strumento. L'IA opera legittimamente solo nello spazio della valutazione formativa, come supporto al lavoro del docente.</div>
+    </div>
+  </div>`,
+
+  // 4 Confine
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Il confine fondamentale: supporto sì, delega no</h2>
+      <div class="subtitle">La distinzione che ogni formatore deve saper spiegare</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-top:3px solid #2E7D32;background:#F0FAF4">
+          <h4 style="color:#2E7D32">✓ SUPPORTO legittimo</h4>
+          <ul class="plain-list" style="padding-left:1rem;margin-top:.4rem">
+            <li>Generare <strong>bozze di rubriche</strong> che il docente rivede e adatta</li>
+            <li>Proporre <strong>formulazioni di feedback</strong> che il docente personalizza</li>
+            <li>Creare <strong>domande diagnostiche ed exit ticket</strong> da validare</li>
+            <li>Differenziare <strong>materiali</strong> per livelli e BES</li>
+            <li>Suggerire <strong>attività di recupero</strong> su lacune già individuate dal docente</li>
+            <li>Far emergere <strong>pattern nelle risposte</strong> della classe (con dati anonimi)</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid #C62828;background:#FFEBEE">
+          <h4 style="color:#C62828">✗ DELEGA impropria</h4>
+          <ul class="plain-list" style="padding-left:1rem;margin-top:.4rem">
+            <li>Far <strong>assegnare voti o giudizi</strong> all'IA</li>
+            <li>Caricare <strong>elaborati con nomi</strong> degli alunni per farli "correggere"</li>
+            <li>Usare il <strong>feedback IA senza revisione</strong> del docente</li>
+            <li>Far <strong>decidere all'IA</strong> chi ha bisogno di recupero</li>
+            <li>Generare <strong>giudizi per il documento</strong> di valutazione</li>
+            <li>Usare l'IA come <strong>"secondo valutatore"</strong> nei casi dubbi</li>
+          </ul>
+        </div>
+      </div>
+      <div class="warn-box"><strong>La regola in una frase:</strong> l'IA può preparare il terreno della valutazione (strumenti, bozze, varianti), ma il giudizio sull'alunno è un atto professionale del docente, non delegabile.</div>
+    </div>
+  </div>`,
+
+  // 5 Dove aiuta
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Dove l'IA aiuta nella valutazione formativa</h2>
+      <div class="subtitle">Sei aree operative, dal quotidiano all'inclusione</div>
+      <div class="card-grid cols-3">
+        <div class="card"><div class="card-accent" style="background:#2B5EA7"></div><h4>1. Rubriche di valutazione</h4><p>Bozze con criteri e descrittori espliciti, da ancorare alle Indicazioni e validare in team</p></div>
+        <div class="card"><div class="card-accent" style="background:#0D7C8F"></div><h4>2. Feedback formativo</h4><p>Formulazioni che riconoscono punti di forza e indicano il passo successivo</p></div>
+        <div class="card"><div class="card-accent" style="background:#5B4A8A"></div><h4>3. Domande diagnostiche</h4><p>Rilevare le preconoscenze prima di una nuova unità di apprendimento</p></div>
+        <div class="card"><div class="card-accent" style="background:#2E7D32"></div><h4>4. Exit ticket</h4><p>2-3 domande rapide a fine lezione per calibrare la lezione successiva</p></div>
+        <div class="card"><div class="card-accent" style="background:#E8820C"></div><h4>5. Recupero e potenziamento</h4><p>Varianti di esercizi su lacune individuate dal docente, percorsi graduati</p></div>
+        <div class="card"><div class="card-accent" style="background:#B0003A"></div><h4>6. Differenziazione BES/DSA</h4><p>Testi semplificati, supporti visivi, formati accessibili — senza dati identificativi</p></div>
+      </div>
+      <div class="info-box">In tutte e sei le aree vale lo stesso schema: <strong>l'IA produce una bozza → il docente verifica, adatta, decide</strong>. Il valore didattico nasce nella revisione, non nella generazione.</div>
+    </div>
+  </div>`,
+
+  // 6 Rubriche
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Rubriche di valutazione con l'IA</h2>
+      <div class="subtitle">Dal prompt con ragionamento guidato alla validazione in team</div>
+      <div style="background:#F8F9FA;border:1px solid #CCC;border-radius:8px;padding:.85rem 1rem;margin:.6rem 0;font-family:'Courier New',monospace;font-size:.82rem;color:#222;line-height:1.5">
+        Sei un docente di italiano della classe V primaria. Crea una rubrica per valutare un testo narrativo.<br>
+        <strong>Prima di costruirla:</strong> 1) elenca i traguardi delle Indicazioni Nazionali che intendi valutare, 2) spiega perché hai scelto questi, 3) indica le dimensioni su cui distribuisci la valutazione.<br>
+        Poi presenta la rubrica: 4 dimensioni × 4 livelli, con descrittori osservabili. Lessico chiaro, adatto a essere condiviso con gli alunni.
+      </div>
+      <div class="card-grid cols-2">
+        <div class="card"><h4 style="color:#2E7D32">Perché funziona</h4><ul class="plain-list" style="padding-left:1rem"><li>Il ragionamento guidato rende verificabili i criteri scelti dall'IA</li><li>L'ancoraggio alle Indicazioni rende la rubrica difendibile in sede collegiale</li><li>I descrittori osservabili evitano formule vaghe</li></ul></div>
+        <div class="card"><h4 style="color:var(--amber)">Cosa resta al docente</h4><ul class="plain-list" style="padding-left:1rem"><li>Verificare la coerenza con il curricolo d'istituto</li><li>Adattare i livelli alla classe reale</li><li>Validare la rubrica con il team o dipartimento</li><li>Usarla: la rubrica orienta, il giudizio è del docente</li></ul></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 7 Feedback
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Feedback formativo con l'IA</h2>
+      <div class="subtitle">Formulazioni di qualità, personalizzazione del docente</div>
+      <div class="info-box">Un feedback è <strong>formativo</strong> quando guarda avanti: riconosce cosa funziona, identifica cosa migliorare e indica il passo successivo concreto. Non è un giudizio, non è una classifica.</div>
+      <table class="compare">
+        <tr><th style="width:30%">Struttura del feedback</th><th>Esempio (testo narrativo, primaria)</th></tr>
+        <tr><td><strong>1. Punto di forza specifico</strong></td><td>«La descrizione del temporale fa davvero "sentire" la pioggia: hai usato bene i suoni e gli aggettivi.»</td></tr>
+        <tr><td><strong>2. Aspetto da migliorare</strong></td><td>«Il finale arriva all'improvviso: il lettore non capisce come si risolve il problema del protagonista.»</td></tr>
+        <tr><td><strong>3. Passo successivo praticabile</strong></td><td>«Prova ad aggiungere 2-3 frasi prima della fine che mostrino cosa fa il protagonista per risolvere la situazione.»</td></tr>
+      </table>
+      <div class="warn-box"><strong>Uso corretto dell'IA:</strong> chiedere varianti di formulazione su un giudizio già maturato dal docente, oppure proposte di feedback su un testo <strong>anonimizzato</strong>. Mai: caricare l'elaborato nominativo e usare la risposta senza revisione.</div>
+    </div>
+  </div>`,
+
+  // 8 Diagnostiche & exit ticket
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Domande diagnostiche e exit ticket</h2>
+      <div class="subtitle">Le due forme più rapide di valutazione formativa quotidiana</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-top:3px solid var(--teal)">
+          <h4>Domande diagnostiche (in ingresso)</h4>
+          <p style="margin-bottom:.4rem">Prima di una nuova unità: rilevare preconoscenze e misconcezioni.</p>
+          <div style="background:#F8F9FA;border:1px solid #DDD;border-radius:6px;padding:.6rem;font-family:'Courier New',monospace;font-size:.76rem;line-height:1.45">«Sei un docente di scienze, classe I secondaria di I grado. Sto per iniziare un'unità sul metodo scientifico. Crea 5 domande diagnostiche per far emergere le preconoscenze, incluse 2 che intercettino le misconcezioni più comuni a questa età.»</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--amber)">
+          <h4>Exit ticket (in uscita)</h4>
+          <p style="margin-bottom:.4rem">A fine lezione: 2-3 domande rapide per capire cosa è passato.</p>
+          <div style="background:#F8F9FA;border:1px solid #DDD;border-radius:6px;padding:.6rem;font-family:'Courier New',monospace;font-size:.76rem;line-height:1.45">«Crea 3 exit ticket per una lezione sulle frazioni equivalenti, classe IV primaria: 1 domanda di comprensione, 1 applicazione rapida, 1 domanda metacognitiva ("Cosa ti è rimasto più difficile?"). Formato: stampabile in mezza pagina.»</div>
+        </div>
+      </div>
+      <div class="info-box"><strong>Per il formatore:</strong> queste due pratiche sono il punto d'ingresso ideale per i colleghi scettici: basso rischio, zero dati personali, beneficio immediato e visibile sulla didattica del giorno dopo.</div>
+    </div>
+  </div>`,
+
+  // 9 Recupero
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Recupero e potenziamento con l'IA</h2>
+      <div class="subtitle">Varianti graduate su lacune individuate dal docente</div>
+      <div class="info-box"><strong>La sequenza corretta:</strong> il docente individua la lacuna (dalla correzione, dall'osservazione, dagli exit ticket) → l'IA genera varianti di esercizi graduati su quella lacuna → il docente seleziona e assegna.</div>
+      <table class="compare">
+        <tr><th style="width:33%">Richiesta al sistema IA</th><th>Cosa specificare nel prompt</th></tr>
+        <tr><td><strong>Esercizi di recupero graduati</strong></td><td>La lacuna precisa («confonde area e perimetro»), il livello di partenza, 3 gradini di difficoltà crescente, autocorrezione possibile</td></tr>
+        <tr><td><strong>Spiegazione alternativa</strong></td><td>«Spiega lo stesso concetto con un'analogia diversa da quella del libro» — utile quando la prima spiegazione non ha funzionato</td></tr>
+        <tr><td><strong>Potenziamento</strong></td><td>Compiti di realtà o problemi aperti per chi ha già consolidato, collegati allo stesso obiettivo dell'unità</td></tr>
+        <tr><td><strong>Pattern della classe</strong></td><td>Solo dati aggregati e anonimi: «su 22 risposte, 14 sbagliano la domanda 3: quali misconcezioni possono spiegarlo?»</td></tr>
+      </table>
+      <div class="warn-box"><strong>Mai:</strong> far decidere all'IA chi va in recupero. La decisione su chi, quando e come è del docente (e del team): l'IA prepara i materiali, non seleziona gli alunni.</div>
+    </div>
+  </div>`,
+
+  // 10 BES/DSA
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Differenziazione per BES e DSA</h2>
+      <div class="subtitle">L'area a più alto valore inclusivo — e a più alta delicatezza privacy</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-top:3px solid #2E7D32">
+          <h4 style="color:#2E7D32">✓ Cosa chiedere all'IA</h4>
+          <ul class="plain-list" style="padding-left:1rem">
+            <li>Versione semplificata di un testo (frasi brevi, lessico di base, paragrafi corti)</li>
+            <li>Mappa concettuale o schema visivo dello stesso contenuto</li>
+            <li>Verifica equipollente con formato accessibile (più tempo, meno item, font leggibile)</li>
+            <li>Descrizione generica del bisogno: «un alunno con dislessia certificata»</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid #C62828">
+          <h4 style="color:#C62828">✗ Cosa non fare mai</h4>
+          <ul class="plain-list" style="padding-left:1rem">
+            <li>Caricare PDP, PEI o certificazioni (dati sensibili, art. 9 GDPR)</li>
+            <li>Inserire nome + diagnosi nel prompt</li>
+            <li>Far progettare all'IA il piano personalizzato (atto del team docente + famiglia)</li>
+            <li>Sostituire gli strumenti compensativi previsti con output IA non validati</li>
+          </ul>
+        </div>
+      </div>
+      <div class="info-box"><strong>Collegamento con M1:</strong> per il lavoro diretto dell'alunno restano preferibili gli strumenti di accessibilità dedicati (Immersive Reader, sintesi vocale), che non richiedono dati personali su piattaforme generative.</div>
+    </div>
+  </div>`,
+
+  // 11 Privacy
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Privacy: i dati di valutazione sono dati delicati</h2>
+      <div class="subtitle">Profilano il percorso di un minore: trattarli come tali</div>
+      <table class="compare">
+        <tr><th style="width:32%">Tipo di dato</th><th style="width:34%">Si può usare nei prompt?</th><th>Come</th></tr>
+        <tr><td>Voti e giudizi con nome</td><td><strong style="color:#C62828">No, mai</strong></td><td>—</td></tr>
+        <tr><td>Elaborati degli alunni</td><td><strong style="color:#E8820C">Solo anonimizzati</strong></td><td>Rimuovere nome, classe, riferimenti personali riconoscibili</td></tr>
+        <tr><td>Risposte della classe</td><td><strong style="color:#E8820C">Solo aggregate</strong></td><td>«14 su 22 sbagliano la domanda 3» — nessun nome</td></tr>
+        <tr><td>PDP, PEI, certificazioni</td><td><strong style="color:#C62828">No, mai</strong></td><td>Documenti riservati con dati sensibili: non si caricano, neppure in parte</td></tr>
+        <tr><td>Bisogno educativo generico</td><td><strong style="color:#2E7D32">Sì</strong></td><td>«Un alunno di 9 anni con dislessia certificata» — nessuna identificazione</td></tr>
+      </table>
+      <div class="warn-box"><strong>La domanda-filtro</strong> (da M2, qui ancora più critica): «Se questo prompt finisse su un server pubblico, qualcuno potrebbe riconoscere un alunno del mio istituto?» Per i dati di valutazione la soglia di prudenza è massima: profilano l'apprendimento di un minore.</div>
+    </div>
+  </div>`,
+
+  // 12 Esempi per ordine
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Esempi per ordine scolastico</h2>
+      <div class="subtitle">La valutazione formativa con IA nei tre ordini del primo ciclo</div>
+      <div class="card-grid cols-3">
+        <div class="card" style="border-top:3px solid var(--teal)">
+          <h4>Infanzia</h4>
+          <p style="margin-bottom:.4rem"><strong>Osservazione, non valutazione:</strong> l'IA aiuta a costruire griglie di osservazione per campi di esperienza.</p>
+          <p style="font-size:.78rem;color:var(--cap);font-style:italic">«Crea una griglia di osservazione per il campo "I discorsi e le parole", bambini di 5 anni: 5 indicatori osservabili durante il gioco simbolico.»</p>
+        </div>
+        <div class="card" style="border-top:3px solid #2E7D32">
+          <h4>Primaria</h4>
+          <p style="margin-bottom:.4rem"><strong>Giudizi sintetici (O.M. 3/2025):</strong> l'IA aiuta a costruire descrittori coerenti con l'Allegato A — la deliberazione resta collegiale.</p>
+          <p style="font-size:.78rem;color:var(--cap);font-style:italic">«Proponi descrittori per il giudizio "Buono" in matematica, classe III, coerenti con le dimensioni autonomia/situazione/risorse dell'Allegato A.»</p>
+        </div>
+        <div class="card" style="border-top:3px solid var(--amber)">
+          <h4>Secondaria I grado</h4>
+          <p style="margin-bottom:.4rem"><strong>Rubriche e feedback:</strong> strumenti condivisi con gli alunni per rendere trasparenti i criteri.</p>
+          <p style="font-size:.78rem;color:var(--cap);font-style:italic">«Trasforma questa rubrica in una checklist di autovalutazione con linguaggio per ragazzi di 13 anni, da usare prima della consegna.»</p>
+        </div>
+      </div>
+      <div class="info-box">In tutti e tre i casi l'output IA entra in un processo professionale esistente (osservazione, scrutinio collegiale, valutazione trasparente) — non lo sostituisce.</div>
+    </div>
+  </div>`,
+
+  // 13 Focus TTT
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Focus Train the Trainers: accompagnare, non sostituire</h2>
+      <div class="subtitle">Come rispondere ai colleghi che chiedono aiuto sulla valutazione con IA</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>1. Parti dal bisogno, non dalla norma</h4><p>«Ho troppi compiti da correggere» è un bisogno reale. Mostra prima l'uso legittimo che lo allevia (bozze di feedback, rubriche, varianti), poi inquadra il confine normativo.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>2. Usa la coppia supporto/delega</h4><p>La tabella a due colonne di questo modulo è lo strumento di accompagnamento più efficace: chiara, visiva, difendibile. Ogni richiesta di un collega si colloca in una delle due colonne.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>3. Fai provare su un caso anonimo</h4><p>Sessione pratica: il collega porta un elaborato anonimizzato, si genera insieme un feedback, lo si rivede criticamente. L'esperienza diretta del limite dell'IA vale più di ogni avvertenza.</p></div>
+        <div class="card" style="border-left:4px solid var(--teal)"><h4>4. Tieni il punto sulla responsabilità</h4><p>Quando un collega insiste per la delega («tanto poi controllo io»), la risposta è ferma e semplice: il giudizio sull'alunno è un atto professionale non delegabile. Il controllo a posteriori non equivale alla titolarità dell'atto.</p></div>
+      </div>
+      <div class="warn-box"><strong>Il rischio reputazionale:</strong> un solo caso di giudizi "fatti dall'IA" emerso con le famiglie danneggia la credibilità di tutto il percorso d'istituto sull'IA. La fermezza su questo confine protegge anche i colleghi che lavorano bene.</div>
+    </div>
+  </div>`,
+
+  // 14 Scenari
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Gli scenari del laboratorio: un assaggio</h2>
+      <div class="subtitle">Tre richieste reali di colleghi: come rispondereste?</div>
+      <div class="scenario">
+        <div class="sc-quote">«Ho 52 temi da correggere entro venerdì. Posso caricarli su ChatGPT e farmi fare una prima correzione con voto, poi io controllo?»</div>
+        <div class="sc-hint"><strong>Nodi:</strong> dati degli alunni su piattaforma esterna + delega del giudizio. Ma il bisogno (tempo) è reale e va rispettato.</div>
+      </div>
+      <div class="scenario">
+        <div class="sc-quote">«Per i giudizi del documento di valutazione, posso dare all'IA i livelli dei bambini e farmi scrivere le descrizioni?»</div>
+        <div class="sc-hint"><strong>Nodi:</strong> tocca la L. 150/2024: i giudizi sintetici correlati a descrizioni. Dove finisce il supporto e inizia la delega collegiale?</div>
+      </div>
+      <div class="scenario">
+        <div class="sc-quote">«Ho un alunno con DSA che non riesce a studiare dal libro. Posso fargli usare ChatGPT per farsi spiegare le cose?»</div>
+        <div class="sc-hint"><strong>Nodi:</strong> uso diretto da parte di un minore + bisogno educativo reale + possibile valore inclusivo. Quali condizioni servirebbero?</div>
+      </div>
+      <div class="info-box">Nel laboratorio ogni gruppo costruisce, per ciascuno scenario, una risposta in tre mosse: <strong>riconoscere il bisogno → mostrare l'alternativa legittima → indicare le condizioni</strong>.</div>
+    </div>
+  </div>`,
+
+  // 15 Prodotto
+  `<div class="slide s-content">
+    <div class="top-bar"></div><div class="accent-bar"></div>
+    <div class="inner">
+      <h2>Il prodotto di M3: schede valutazione + modello di accompagnamento</h2>
+      <div class="subtitle">Terza componente del kit del formatore interno</div>
+      <div class="card-grid cols-2">
+        <div class="card" style="border-top:3px solid var(--navy)">
+          <h4>Schede operative per la valutazione formativa</h4>
+          <ul class="plain-list" style="padding-left:1rem">
+            <li>Prompt-template per rubriche con ragionamento guidato</li>
+            <li>Struttura del feedback formativo in tre mosse</li>
+            <li>Generatori di domande diagnostiche ed exit ticket</li>
+            <li>Schema per varianti di recupero graduate</li>
+            <li>Regole di anonimizzazione per elaborati e dati di classe</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid var(--amber)">
+          <h4>Modello di accompagnamento per i colleghi</h4>
+          <ul class="plain-list" style="padding-left:1rem">
+            <li>La tabella supporto/delega come strumento di dialogo</li>
+            <li>Risposte alle tre richieste più frequenti (scenari)</li>
+            <li>La sequenza in tre mosse: bisogno → alternativa → condizioni</li>
+            <li>I punti non negoziabili (giudizio, dati nominativi, PDP/PEI)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="info-box">Entrambi i materiali confluiscono nel <strong>kit del formatore</strong> e saranno riusati in M5 (implementazione e accompagnamento) e nel micro-teaching di M6.</div>
+    </div>
+  </div>`,
+
+  // 16 Lab (dark)
+  `<div class="slide s-dark">
+    <div class="top-bar"></div><div class="bot-bar"></div>
+    <div class="inner">
+      <div style="font-size:.75rem;font-weight:700;color:var(--amber);letter-spacing:.1em;margin-bottom:.75rem">LABORATORIO M3</div>
+      <h2 style="font-size:1.5rem;margin-bottom:1.25rem">Analisi di scenari e modello di accompagnamento</h2>
+      <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.88rem;color:#A0C4D8;font-style:italic">Obiettivo: costruire un modello di risposta per accompagnare i colleghi, non solo un prodotto per la classe.</div>
+      <div class="card-grid cols-2" style="gap:.65rem">
+        <div class="step-box"><div class="step-num">01</div><h4>Analisi degli scenari (25 min)</h4><p>In gruppi: per ciascuno dei 3 scenari, individuare i nodi (privacy, delega, condizioni) e il bisogno legittimo del collega.</p></div>
+        <div class="step-box"><div class="step-num">02</div><h4>Costruzione delle risposte (30 min)</h4><p>Per ogni scenario: risposta in tre mosse (riconoscere il bisogno → alternativa legittima → condizioni necessarie).</p></div>
+        <div class="step-box"><div class="step-num">03</div><h4>Simulazione a coppie (20 min)</h4><p>Un partecipante interpreta il collega, l'altro il formatore. Si prova la risposta dal vivo, poi si invertono i ruoli.</p></div>
+        <div class="step-box"><div class="step-num">04</div><h4>Validazione del modello (15 min)</h4><p>In plenaria: si consolida il modello di accompagnamento condiviso, che entra nel kit del formatore.</p></div>
+      </div>
+    </div>
+  </div>`,
+
+  // 17 Sintesi (dark)
+  `<div class="slide s-dark">
+    <div class="top-bar"></div><div class="bot-bar"></div>
+    <div class="inner">
+      <div style="font-size:.75rem;font-weight:700;color:var(--teal);letter-spacing:.1em;margin-bottom:.5rem">SINTESI DEL MODULO 3</div>
+      <h2 style="margin-bottom:1rem">Cosa portate a casa</h2>
+      <div class="takeaway-item"><div class="ti-icon">⚖️</div><div><div class="ti-title">Il quadro normativo della valutazione</div><div class="ti-text">D.lgs. 62/2017, L. 150/2024 e O.M. 3/2025: la responsabilità valutativa è del docente e non è delegabile</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">🚧</div><div><div class="ti-title">Il confine supporto/delega</div><div class="ti-text">Sei usi legittimi e sei delegazioni improprie: la tabella che ogni formatore deve saper spiegare</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">🛠️</div><div><div class="ti-title">Sei aree operative</div><div class="ti-text">Rubriche, feedback, diagnostiche, exit ticket, recupero, BES/DSA: prompt e condizioni per ciascuna</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">🔒</div><div><div class="ti-title">Privacy dei dati di valutazione</div><div class="ti-text">Elaborati anonimizzati, dati aggregati, mai PDP/PEI: la soglia di prudenza massima del corso</div></div></div>
+      <div class="takeaway-item"><div class="ti-icon">🤝</div><div><div class="ti-title">Il modello di accompagnamento</div><div class="ti-text">Riconoscere il bisogno → mostrare l'alternativa → indicare le condizioni: la terza componente del kit</div></div></div>
+    </div>
+  </div>`
+];
+
+let cur = 0;
+const deck = document.getElementById('deck');
+const dotsEl = document.getElementById('dots');
+slides.forEach((html)=>{const div=document.createElement('div');div.innerHTML=html;deck.appendChild(div.firstElementChild);});
+slides.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' current':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);});
+function goTo(n){
+  const sls=deck.querySelectorAll('.slide'), dts=dotsEl.querySelectorAll('.dot');
+  sls[cur].classList.remove('active'); dts[cur].classList.remove('current'); dts[cur].classList.add('done');
+  cur=n;
+  sls[cur].classList.add('active'); dts[cur].classList.remove('done'); dts[cur].classList.add('current');
+  document.getElementById('counter').textContent=(cur+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+}
+function go(d){if(cur+d>=0&&cur+d<slides.length)goTo(cur+d);}
+goTo(0);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+});
+</script>
+</body>
+</html>

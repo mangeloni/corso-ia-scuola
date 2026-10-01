@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz di verifica – M5 Implementazione pratica</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#EAF3F7;color:#1E1E1E;min-height:100vh;padding:2rem 1rem}
+.container{max-width:780px;margin:0 auto}
+.quiz-header{background:#1A3560;color:#fff;border-radius:12px;padding:2rem;margin-bottom:2rem;text-align:center}
+.quiz-header h1{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+.meta{font-size:.9rem;color:#A0C4D8;margin-top:.5rem}
+.badge{display:inline-block;background:#E8820C;color:#fff;font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.05em;margin-bottom:.75rem}
+.progress-bar{background:#1E3A5F;border-radius:8px;height:6px;margin-bottom:2rem;overflow:hidden}
+.progress-fill{background:#E8820C;height:100%;border-radius:8px;transition:width .4s}
+.question-card{background:#fff;border-radius:12px;border:1px solid #DDE3EA;padding:2rem;margin-bottom:1.5rem;display:none}
+.question-card.active{display:block}
+.question-number{font-size:.8rem;font-weight:600;color:#0D7C8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.question-text{font-size:1.1rem;font-weight:600;color:#1A3560;line-height:1.5;margin-bottom:1.5rem}
+.options{display:flex;flex-direction:column;gap:.75rem}
+.option{cursor:pointer;padding:1rem 1.25rem;border:2px solid #E2E8F0;border-radius:8px;font-size:.95rem;color:#1E1E1E;transition:all .2s;display:flex;align-items:flex-start;gap:.75rem;background:#fff}
+.option:hover:not(.disabled){border-color:#0D7C8F;background:#EAF3F7}
+.option.correct{border-color:#2E7D32;background:#F0FAF4;color:#1B5E20}
+.option.wrong{border-color:#C62828;background:#FFEBEE;color:#B71C1C}
+.option.disabled{cursor:default}
+.option-letter{width:24px;height:24px;min-width:24px;border-radius:50%;background:#EAF3F7;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#1A3560;margin-top:.1rem}
+.option.correct .option-letter{background:#2E7D32;color:#fff}
+.option.wrong .option-letter{background:#C62828;color:#fff}
+.feedback{margin-top:1.25rem;padding:1rem 1.25rem;border-radius:8px;font-size:.9rem;line-height:1.5;display:none}
+.feedback.correct-fb{background:#F0FAF4;border-left:4px solid #2E7D32;color:#1B5E20}
+.feedback.wrong-fb{background:#FFEBEE;border-left:4px solid #C62828;color:#7F1D1D}
+.feedback.show{display:block}
+.nav-buttons{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem}
+.btn-next{background:#1A3560;color:#fff;padding:.6rem 1.5rem;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;border:none}
+.btn-next:hover{background:#0D2040}
+.btn-next:disabled{background:#B0BEC5;cursor:default}
+.results{display:none;background:#fff;border-radius:12px;padding:2.5rem;text-align:center;border:1px solid #DDE3EA}
+.results.show{display:block}
+.score-circle{width:120px;height:120px;border-radius:50%;margin:0 auto 1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff}
+.excellent{background:#2E7D32}.good{background:#0D7C8F}.pass{background:#E8820C}.fail{background:#C62828}
+.score-label{font-size:.65rem;font-weight:400;letter-spacing:.05em}
+.result-title{font-size:1.4rem;font-weight:700;color:#1A3560;margin-bottom:.5rem}
+.result-desc{color:#4A5568;font-size:.95rem;margin-bottom:2rem;line-height:1.6}
+.result-detail{text-align:left;border:1px solid #DDE3EA;border-radius:8px;overflow:hidden;margin-bottom:1.5rem}
+.rdr{display:flex;padding:.65rem 1rem;font-size:.9rem;border-bottom:1px solid #EEF2F7}
+.rdr:last-child{border-bottom:none}
+.rdr.cr{background:#F0FAF4}.rdr.wr{background:#FFEBEE}
+.btn-restart{background:#1A3560;color:#fff;padding:.75rem 2rem;font-size:1rem;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+.btn-restart:hover{background:#0D2040}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="quiz-header">
+    <div class="badge">MODULO 5</div>
+    <h1>Quiz di verifica – Implementazione pratica e accompagnamento dei docenti</h1>
+    <div class="meta">10 domande a risposta multipla &nbsp;|&nbsp; Corso: Formare i formatori sull'IA nella scuola</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div id="quizArea"></div>
+  <div class="results" id="results">
+    <div id="scoreCircle" class="score-circle"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-desc" id="resultDesc"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <button class="btn-restart" onclick="restartQuiz()">Ricomincia il quiz</button>
+  </div>
+</div>
+<script>
+const questions = [
+  {
+    q: "Un docente della scuola primaria usa già ChatGPT intensivamente, ma non verifica mai gli output prima di usarli con gli alunni. A quale profilo corrisponde?",
+    opts: ["Lo scettico costruttivo","L'entusiasta acritico","Il neutro pragmatico","Il resistente valoriale"],
+    correct:1,
+    feedback:"Corretto. L'entusiasta acritico usa già l'IA con entusiasmo ma senza consapevolezza dei rischi. Non verifica gli output, può ignorare la privacy, e crea aspettative irrealistiche. Il formatore non deve frenarne l'entusiasmo, ma riorientarlo: mostrare un caso concreto di allucinazione o bias diventa un'opportunità formativa."
+  },
+  {
+    q: "Un collega dice: «Non ho tempo per queste cose.» Qual è la risposta più efficace del formatore interno?",
+    opts: ["Spiegare l'obbligo normativo dell'AI Act art. 4","Mostrare un uso concreto che fa risparmiare tempo già questa settimana","Proporre un corso di formazione di 4 ore sull'IA","Rimandare la discussione a quando il collega avrà più disponibilità"],
+    correct:1,
+    feedback:"Corretto. La resistenza 'non ho tempo' si supera mostrando un risparmio immediato e concreto. '5 minuti e questo prompt genera una scheda in 2 minuti anziché 20.' Non teoria, non normativa: beneficio pratico e misurabile subito. La norma può essere introdotta dopo, come cornice, non come apertura."
+  },
+  {
+    q: "Qual è il componente più importante di una mini-UdA formativa, da posizionare al centro e non alla fine?",
+    opts: ["La presentazione teorica degli strumenti","L'attività pratica in cui i colleghi producono qualcosa","La parte normativa su AI Act e GDPR","Il recap dei contenuti dei moduli precedenti"],
+    correct:1,
+    feedback:"Corretto. L'attività pratica deve essere al centro dell'intervento formativo, non alla fine. Chi non ha mai usato un chatbot deve poter provare entro i primi 10 minuti, con supporto. La pratica prima della spiegazione — o subito dopo una brevissima introduzione — è il formato più efficace per la formazione professionale degli adulti."
+  },
+  {
+    q: "Qual è il principio fondamentale dell'uso curricolarmente coerente dell'IA?",
+    opts: ["Usare l'IA in ogni lezione per modernizzare la didattica","Non aggiungere l'IA al curricolo, ma usarla per raggiungere obiettivi già presenti nelle Indicazioni","Introdurre l'IA come disciplina autonoma nel curricolo del primo ciclo","Usare l'IA solo per le discipline STEM"],
+    correct:1,
+    feedback:"Corretto. Il principio fondamentale è: non si aggiunge l'IA al curricolo. Si usa l'IA per raggiungere obiettivi già presenti nelle Indicazioni Nazionali (D.M. 221/2025), nel PTOF e nell'UdA. La domanda giusta da insegnare ai colleghi non è 'Come posso usare l'IA in questa lezione?' ma 'Quale obiettivo curricolare voglio raggiungere, e l'IA può aiutarmi?'"
+  },
+  {
+    q: "Un docente di secondaria di I grado esprime una posizione etica consolidata contro l'IA nella scuola, motivata da preoccupazioni sulla sostituzione del docente. Come deve reagire il formatore?",
+    opts: ["Citare l'obbligo dell'AI Act art. 4 per convincerlo","Rispettare la posizione: l'obbligo è di AI literacy, non di uso. Offrire di mostrare cosa succede anche solo per capire.","Segnalare al DS la resistenza del collega","Escluderlo dalla formazione e formare solo chi è disponibile"],
+    correct:1,
+    feedback:"Corretto. Il resistente valoriale ha una posizione legittima. Il formatore non deve forzarlo: l'obbligo normativo (art. 4 AI Act) riguarda la consapevolezza (AI literacy), non l'adozione degli strumenti. L'approccio corretto è rispettare la posizione e offrire una porta aperta: 'Posso mostrarti cosa sta succedendo, anche solo per capire cosa usano i tuoi alunni.'"
+  },
+  {
+    q: "Qual è la fase 0 del modello di introduzione progressiva dell'IA in un istituto?",
+    opts: ["Acquistare gli abbonamenti agli strumenti IA per tutti i docenti","Mappare la situazione: cosa già usano i colleghi, con quali strumenti, con quali pratiche","Formare tutti i docenti contemporaneamente","Deliberare la policy d'istituto prima di qualsiasi altra azione"],
+    correct:1,
+    feedback:"Corretto. La Fase 0 è mappare la situazione: capire il punto di partenza reale dell'istituto prima di formare o introdurre strumenti. Cosa già usano i colleghi? Con quali risultati? Quali rischi già ci sono? Solo partendo dalla realtà si può progettare un percorso efficace e non calato dall'alto."
+  },
+  {
+    q: "Quale figura istituzionale deve essere coinvolta PRIMA dell'adozione di qualsiasi strumento IA con dati degli alunni?",
+    opts: ["L'animatore digitale","Il referente di dipartimento","Il DPO (Data Protection Officer)","Il referente per l'orientamento"],
+    correct:2,
+    feedback:"Corretto. Il DPO (Data Protection Officer) deve essere consultato prima dell'adozione di strumenti IA che trattano dati degli alunni. È una consulenza obbligatoria per verificare la conformità GDPR, la validità del DPA del provider e le condizioni di age compliance. Coinvolgerlo dopo aver già adottato lo strumento è un errore procedurale che può esporre l'istituto a responsabilità."
+  },
+  {
+    q: "Quale formato è più adatto per la scuola dell'infanzia quando si introduce l'IA nella formazione dei docenti?",
+    opts: ["Mostrare come i bambini possono interagire con ChatGPT per attività creative","Formare le educatrici su come usare l'IA per progettare attività, griglie di osservazione e materiali — senza coinvolgere i bambini","Introdurre strumenti di riconoscimento delle emozioni per adattare le attività","Creare account Canva per i bambini di 5 anni con supervisione dell'educatrice"],
+    correct:1,
+    feedback:"Corretto. Nella scuola dell'infanzia l'IA è sempre e solo uno strumento dell'educatrice. I bambini 3-6 anni non interagiscono con sistemi IA. Il formatore lavora sulle pratiche professionali dell'adulto: come usare l'IA per progettare attività, costruire griglie di osservazione, differenziare materiali narrativi."
+  },
+  {
+    q: "A quale livello del modello di valutazione della formazione corrisponde la domanda 'Hai usato qualcosa di quello che abbiamo visto? Come è andata?' a distanza di 2 settimane?",
+    opts: ["Livello 1 – Reazione","Livello 2 – Apprendimento","Livello 3 – Trasferimento","Livello 4 – Impatto"],
+    correct:2,
+    feedback:"Corretto. Il Livello 3 del modello Kirkpatrick (adattato) misura il trasferimento: se i colleghi hanno effettivamente cambiato qualche pratica in classe. Il contatto di follow-up a 1-2 settimane è il momento più importante per verificarlo. I livelli 1 (reazione) e 2 (apprendimento) si misurano durante o subito dopo la sessione; il livello 4 (impatto) riguarda i cambiamenti a lungo termine dell'istituto."
+  },
+  {
+    q: "Qual è la differenza chiave tra le competenze dell'utente IA e quelle del formatore interno TTT?",
+    opts: ["Il formatore deve conoscere più strumenti IA rispetto all'utente","Il formatore deve saper creare le condizioni perché altri apprendano, non solo saper usare gli strumenti","Il formatore deve avere competenze tecniche informatiche avanzate","Il formatore deve aver seguito più ore di formazione sull'IA dell'utente"],
+    correct:1,
+    feedback:"Corretto. Il salto TTT (Train the Trainers) non è quantitativo (sapere di più), ma qualitativo (saper fare cose diverse). Il formatore non ha bisogno di sapere tutto sull'IA. Ha bisogno di saper accompagnare un processo di cambiamento: ascoltare le resistenze, progettare esperienze pratiche, valutare l'impatto. Il punto non è trasmettere contenuti: è cambiare pratiche."
+  }
+];
+
+let current=0, score=0, answered=[], userAnswers={};
+function buildQuiz(){
+  const area=document.getElementById('quizArea');area.innerHTML='';
+  questions.forEach((q,i)=>{
+    const card=document.createElement('div');card.className='question-card'+(i===0?' active':'');card.id='q'+i;
+    const letters=['A','B','C','D'];
+    card.innerHTML=`<div class="question-number">Domanda ${i+1} di ${questions.length}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options" id="opts${i}">${q.opts.map((o,j)=>`<div class="option" onclick="selectAnswer(${i},${j})" id="opt${i}_${j}"><div class="option-letter">${letters[j]}</div><div>${o}</div></div>`).join('')}</div>
+      <div class="feedback" id="fb${i}"></div>
+      <div class="nav-buttons"><button class="btn-next" id="next${i}" onclick="nextQuestion(${i})" disabled>${i<questions.length-1?'Prossima domanda →':'Vedi risultati →'}</button></div>`;
+    area.appendChild(card);
+  });
+  updateProgress();
+}
+function selectAnswer(qi,ai){
+  if(answered.includes(qi))return;answered.push(qi);userAnswers[qi]=ai;
+  const q=questions[qi],ok=ai===q.correct;if(ok)score++;
+  q.opts.forEach((_,j)=>{const opt=document.getElementById(`opt${qi}_${j}`);opt.classList.add('disabled');if(j===q.correct)opt.classList.add('correct');else if(j===ai&&!ok)opt.classList.add('wrong');});
+  const fb=document.getElementById(`fb${qi}`);fb.textContent=q.feedback;fb.className=`feedback show ${ok?'correct-fb':'wrong-fb'}`;
+  document.getElementById(`next${qi}`).disabled=false;
+}
+function nextQuestion(qi){
+  document.getElementById('q'+qi).classList.remove('active');
+  if(qi<questions.length-1){document.getElementById('q'+(qi+1)).classList.add('active');current=qi+1;updateProgress();}
+  else showResults();
+}
+function updateProgress(){document.getElementById('progressFill').style.width=(current/questions.length*100)+'%';}
+function showResults(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('progressFill').style.width='100%';
+  const r=document.getElementById('results');r.classList.add('show');
+  const pct=Math.round(score/questions.length*100);
+  const circle=document.getElementById('scoreCircle');circle.innerHTML=`${score}/${questions.length}<div class="score-label">PUNTI</div>`;
+  let cls,title,desc;
+  if(pct>=90){cls='excellent';title='Eccellente!';desc='Padroneggi le competenze del formatore TTT: profili dei colleghi, progettazione degli interventi, gestione delle resistenze. Sei pronto per accompagnare il tuo istituto nell\'adozione responsabile dell\'IA.';}
+  else if(pct>=70){cls='good';title='Buon risultato!';desc='Hai compreso i concetti chiave del modulo. Rivedi le domande sbagliate, in particolare quelle sull\'introduzione progressiva e sulla valutazione della formazione.';}
+  else if(pct>=50){cls='pass';title='Sufficiente';desc='Hai raggiunto la sufficienza. Rivedi la dispensa, in particolare le sezioni sui profili dei colleghi, sulla struttura della mini-UdA e sull\'ecosistema del formatore.';}
+  else{cls='fail';title='Da rivedere';desc='Rivedi la dispensa prima di procedere. Concentrati su: quattro profili di colleghi, struttura mini-UdA formativa, introduzione progressiva, ecosistema del formatore.';}
+  circle.className=`score-circle ${cls}`;
+  document.getElementById('resultTitle').textContent=title;
+  document.getElementById('resultDesc').textContent=desc;
+  document.getElementById('resultDetail').innerHTML=questions.map((q,i)=>{
+    const ok=userAnswers[i]===q.correct;
+    return `<div class="rdr ${ok?'cr':'wr'}"><span style="margin-right:.75rem">${ok?'✓':'✗'}</span><span style="flex:1;font-size:.88rem"><strong>D${i+1}:</strong> ${q.q.substring(0,70)}…</span></div>`;
+  }).join('');
+}
+function restartQuiz(){current=0;score=0;answered=[];userAnswers={};document.getElementById('results').classList.remove('show');document.getElementById('quizArea').style.display='';buildQuiz();}
+buildQuiz();
+</script>
+</body>
+</html>

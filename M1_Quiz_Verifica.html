@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz di verifica – M1 Panorama strumenti IA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#EAF3F7;color:#1E1E1E;min-height:100vh;padding:2rem 1rem}
+.container{max-width:780px;margin:0 auto}
+.quiz-header{background:#1A3560;color:#fff;border-radius:12px;padding:2rem;margin-bottom:2rem;text-align:center}
+.quiz-header h1{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+.quiz-header .meta{font-size:.9rem;color:#A0C4D8;margin-top:.5rem}
+.badge{display:inline-block;background:#E8820C;color:#fff;font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.05em;margin-bottom:.75rem}
+.progress-bar{background:#1E3A5F;border-radius:8px;height:6px;margin-bottom:2rem;overflow:hidden}
+.progress-fill{background:#E8820C;height:100%;border-radius:8px;transition:width .4s ease}
+.question-card{background:#fff;border-radius:12px;border:1px solid #DDE3EA;padding:2rem;margin-bottom:1.5rem;display:none}
+.question-card.active{display:block}
+.question-number{font-size:.8rem;font-weight:600;color:#0D7C8F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.question-text{font-size:1.1rem;font-weight:600;color:#1A3560;line-height:1.5;margin-bottom:1.5rem}
+.options{display:flex;flex-direction:column;gap:.75rem}
+.option{cursor:pointer;padding:1rem 1.25rem;border:2px solid #E2E8F0;border-radius:8px;font-size:.95rem;color:#1E1E1E;transition:all .2s;display:flex;align-items:flex-start;gap:.75rem;background:#fff}
+.option:hover:not(.disabled){border-color:#0D7C8F;background:#EAF3F7}
+.option.correct{border-color:#2E7D32;background:#F0FAF4;color:#1B5E20}
+.option.wrong{border-color:#C62828;background:#FFEBEE;color:#B71C1C}
+.option.disabled{cursor:default}
+.option-letter{width:24px;height:24px;min-width:24px;border-radius:50%;background:#EAF3F7;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#1A3560;margin-top:.1rem}
+.option.correct .option-letter{background:#2E7D32;color:#fff}
+.option.wrong .option-letter{background:#C62828;color:#fff}
+.feedback{margin-top:1.25rem;padding:1rem 1.25rem;border-radius:8px;font-size:.9rem;line-height:1.5;display:none}
+.feedback.correct-fb{background:#F0FAF4;border-left:4px solid #2E7D32;color:#1B5E20}
+.feedback.wrong-fb{background:#FFEBEE;border-left:4px solid #C62828;color:#7F1D1D}
+.feedback.show{display:block}
+.nav-buttons{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem}
+.btn{padding:.6rem 1.5rem;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-next{background:#1A3560;color:#fff}
+.btn-next:hover{background:#0D2040}
+.btn-next:disabled{background:#B0BEC5;cursor:default}
+.results{display:none;background:#fff;border-radius:12px;padding:2.5rem;text-align:center;border:1px solid #DDE3EA}
+.results.show{display:block}
+.score-circle{width:120px;height:120px;border-radius:50%;margin:0 auto 1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff}
+.score-circle.excellent{background:#2E7D32}
+.score-circle.good{background:#0D7C8F}
+.score-circle.pass{background:#E8820C}
+.score-circle.fail{background:#C62828}
+.score-label{font-size:.65rem;font-weight:400;letter-spacing:.05em}
+.result-title{font-size:1.4rem;font-weight:700;color:#1A3560;margin-bottom:.5rem}
+.result-desc{color:#4A5568;font-size:.95rem;margin-bottom:2rem;line-height:1.6}
+.result-detail{text-align:left;border:1px solid #DDE3EA;border-radius:8px;overflow:hidden;margin-bottom:1.5rem}
+.result-detail-row{display:flex;padding:.65rem 1rem;font-size:.9rem;border-bottom:1px solid #EEF2F7}
+.result-detail-row:last-child{border-bottom:none}
+.result-detail-row.correct-row{background:#F0FAF4}
+.result-detail-row.wrong-row{background:#FFEBEE}
+.result-icon{width:20px;margin-right:.75rem;font-size:1rem}
+.btn-restart{background:#1A3560;color:#fff;padding:.75rem 2rem;font-size:1rem;border-radius:8px;border:none;cursor:pointer;font-weight:600;margin-top:.5rem}
+.btn-restart:hover{background:#0D2040}
+@media(max-width:600px){body{padding:1rem .5rem}.quiz-header{padding:1.5rem 1rem}.question-card{padding:1.5rem 1rem}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="quiz-header">
+    <div class="badge">MODULO 1</div>
+    <h1>Quiz di verifica – Panorama degli strumenti IA per l'educazione</h1>
+    <div class="meta">10 domande a risposta multipla &nbsp;|&nbsp; Corso: Formare i formatori sull'IA nella scuola</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div id="quizArea"></div>
+  <div class="results" id="results">
+    <div id="scoreCircle" class="score-circle"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-desc" id="resultDesc"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <button class="btn-restart" onclick="restartQuiz()">Ricomincia il quiz</button>
+  </div>
+</div>
+<script>
+const questions = [
+  {
+    q: "L'articolo 4 dell'AI Act (Reg. UE 2024/1689) obbliga deployer e provider a garantire:",
+    opts: [
+      "L'uso esclusivo di strumenti IA certificati dalla Commissione europea",
+      "Livelli adeguati di AI literacy al personale che usa sistemi IA",
+      "L'approvazione ministeriale per ogni strumento IA adottato a scuola",
+      "La disattivazione dei sistemi IA che producono allucinazioni"
+    ],
+    correct: 1,
+    feedback: "Corretto. L'art. 4 AI Act introduce l'obbligo di alfabetizzazione sull'IA (AI literacy) per deployer e provider. La scuola che adotta strumenti IA è un deployer e deve garantire competenze adeguate al personale. Questo è il fondamento normativo del corso."
+  },
+  {
+    q: "Quale delle seguenti definisce correttamente il concetto di 'deployer' secondo l'AI Act?",
+    opts: [
+      "Chi sviluppa e addestra modelli di Intelligenza Artificiale",
+      "Chi vende licenze di strumenti IA alle istituzioni scolastiche",
+      "Qualsiasi soggetto che utilizza un sistema IA sotto la propria responsabilità",
+      "Il Ministero dell'Istruzione in quanto garante della formazione digitale"
+    ],
+    correct: 2,
+    feedback: "Corretto. Secondo l'art. 3 dell'AI Act, deployer è qualsiasi persona fisica o giuridica, autorità pubblica o altro organismo che utilizza un sistema IA sotto la propria responsabilità. La scuola che usa ChatGPT o Quizizz è quindi un deployer."
+  },
+  {
+    q: "Nel contesto dell'istituto comprensivo, l'uso 'mediato' dell'IA indica che:",
+    opts: [
+      "Gli alunni usano l'IA con account personali previa autorizzazione dei genitori",
+      "Il docente guida l'interazione con l'IA, spesso proiettando l'interfaccia alla classe",
+      "L'IA viene usata solo per attività amministrative, non didattiche",
+      "L'accesso all'IA è mediato da un filtro tecnico di sicurezza istituito dall'istituto"
+    ],
+    correct: 1,
+    feedback: "Corretto. L'uso mediato è quello in cui il docente interagisce con l'IA (es. ChatGPT proiettato alla classe) mentre gli alunni osservano, propongono input e discutono gli output collettivamente. Nessun account alunno è necessario: è il livello più sicuro per il primo ciclo."
+  },
+  {
+    q: "Quale strumento IA tra i seguenti analizza documenti caricati dall'utente e risponde basandosi esclusivamente su di essi?",
+    opts: [
+      "ChatGPT (OpenAI)",
+      "Microsoft Copilot",
+      "NotebookLM (Google)",
+      "Quizizz"
+    ],
+    correct: 2,
+    feedback: "Corretto. NotebookLM è progettato per rispondere solo in base ai documenti che l'utente carica (PDF, testi, URL). Questo riduce il rischio di allucinazioni e cita le fonti nei documenti caricati. È particolarmente utile per il docente che analizza testi normativi o articoli."
+  },
+  {
+    q: "Un docente di scuola primaria vuole usare l'IA per creare un quiz di fine lezione. Qual è l'approccio più appropriato?",
+    opts: [
+      "Chiedere agli alunni di creare un account ChatGPT per generare domande",
+      "Usare ChatGPT con il proprio account per generare domande, poi rivederle e usarle",
+      "Usare Quizizz con account personali degli alunni senza verifica dei termini d'uso",
+      "Evitare completamente l'IA nella scuola primaria per ragioni normative"
+    ],
+    correct: 1,
+    feedback: "Corretto. L'uso docente (Livello 1) è sempre il più appropriato per iniziare: il docente usa il proprio account per generare bozze di quiz, le verifica criticamente e poi le usa in classe. Non è necessario nessun account alunno e i rischi privacy sono minimi."
+  },
+  {
+    q: "Il termine 'allucinazione' in riferimento ai sistemi IA generativi indica:",
+    opts: [
+      "Un errore tecnico che causa il blocco del sistema durante l'uso",
+      "La tendenza dell'IA a produrre informazioni false presentandole come vere",
+      "La capacità dell'IA di immaginare scenari futuri ipotetici",
+      "Un bias che porta l'IA a favorire certi autori rispetto ad altri"
+    ],
+    correct: 1,
+    feedback: "Corretto. Le allucinazioni sono output dell'IA che contengono informazioni false (date, nomi, citazioni, fatti) presentate con la stessa sicurezza e fluidità delle informazioni vere. Questo è il motivo per cui ogni output dell'IA deve essere verificato prima dell'uso didattico."
+  },
+  {
+    q: "Quale dei seguenti criteri è più rilevante da verificare prima di usare uno strumento IA con gli alunni?",
+    opts: [
+      "Il numero di lingue supportate dallo strumento",
+      "L'età minima di utilizzo e le condizioni d'uso per i minori",
+      "Il numero di aggiornamenti rilasciati nell'ultimo anno",
+      "La presenza di modalità offline per l'uso senza connessione"
+    ],
+    correct: 1,
+    feedback: "Corretto. L'età minima è il primo criterio da verificare quando si considera l'uso diretto degli alunni (Livello 3). La maggior parte degli strumenti IA ha un'età minima di 13 anni (COPPA); il GDPR europeo è più restrittivo (16 anni per il consenso al trattamento dati). Nel primo ciclo questo limita fortemente le opzioni."
+  },
+  {
+    q: "I bias algoritmici negli strumenti IA generativi sono principalmente causati da:",
+    opts: [
+      "Errori di programmazione introdotti deliberatamente dagli sviluppatori",
+      "Connessioni internet instabili che alterano la qualità degli output",
+      "Pregiudizi e asimmetrie presenti nei dati su cui il modello è stato addestrato",
+      "L'uso di lingue diverse dall'inglese come lingua di input"
+    ],
+    correct: 2,
+    feedback: "Corretto. I bias algoritmici riflettono le asimmetrie e i pregiudizi presenti nei dati di addestramento (internet, libri, articoli). Se certi gruppi sociali, culturali o di genere sono sotto- o sovrarappresentati nei dati, l'IA tende a replicare questi squilibri negli output."
+  },
+  {
+    q: "Canva Education è classificabile nella categoria degli strumenti IA per l'educazione come:",
+    opts: [
+      "Tutor intelligente",
+      "Sistema adattivo",
+      "Strumento per quiz e valutazione formativa",
+      "Generatore di contenuti multimediali"
+    ],
+    correct: 3,
+    feedback: "Corretto. Canva Education appartiene alla categoria dei generatori di contenuti: permette di creare presentazioni, infografiche, video e poster con il supporto di componenti IA (generazione di immagini, testo, suggerimenti di design). Il piano gratuito per le istituzioni educative include template avanzati e collaborazione in classe."
+  },
+  {
+    q: "Quale tra le seguenti affermazioni descrive meglio il ruolo del formatore interno sull'IA?",
+    opts: [
+      "Obbligare tutti i colleghi a usare almeno uno strumento IA nella propria didattica",
+      "Installare e configurare personalmente gli strumenti IA nei dispositivi dell'istituto",
+      "Orientare i colleghi nella scelta e nell'uso consapevole degli strumenti, prevenendo errori comuni",
+      "Sostituire la formazione esterna con un corso online autonomamente progettato"
+    ],
+    correct: 2,
+    feedback: "Corretto. Il formatore interno non è un tecnico IA né un sostituto della formazione professionale. Il suo ruolo è orientare i colleghi, aiutarli a scegliere con criterio, prevenire usi impropri e sostenere un'adozione graduale e consapevole dell'IA nell'istituto."
+  }
+];
+
+let current = 0, score = 0, answered = [];
+
+function buildQuiz() {
+  const area = document.getElementById('quizArea');
+  area.innerHTML = '';
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'question-card' + (i === 0 ? ' active' : '');
+    card.id = 'q' + i;
+    const letters = ['A','B','C','D'];
+    card.innerHTML = `
+      <div class="question-number">Domanda ${i+1} di ${questions.length}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options" id="opts${i}">
+        ${q.opts.map((o,j) => `<div class="option" onclick="selectAnswer(${i},${j})" id="opt${i}_${j}">
+          <div class="option-letter">${letters[j]}</div><div>${o}</div>
+        </div>`).join('')}
+      </div>
+      <div class="feedback" id="fb${i}"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-next" id="next${i}" onclick="nextQuestion(${i})" disabled>
+          ${i < questions.length-1 ? 'Prossima domanda →' : 'Vedi risultati →'}
+        </button>
+      </div>`;
+    area.appendChild(card);
+  });
+  updateProgress();
+}
+
+function selectAnswer(qi, ai) {
+  if (answered.includes(qi)) return;
+  answered.push(qi);
+  const q = questions[qi];
+  const isCorrect = ai === q.correct;
+  if (isCorrect) score++;
+  const letters = ['A','B','C','D'];
+  q.opts.forEach((_, j) => {
+    const opt = document.getElementById(`opt${qi}_${j}`);
+    opt.classList.add('disabled');
+    if (j === q.correct) opt.classList.add('correct');
+    else if (j === ai && !isCorrect) opt.classList.add('wrong');
+  });
+  const fb = document.getElementById(`fb${qi}`);
+  fb.textContent = q.feedback;
+  fb.className = `feedback show ${isCorrect ? 'correct-fb' : 'wrong-fb'}`;
+  document.getElementById(`next${qi}`).disabled = false;
+}
+
+function nextQuestion(qi) {
+  document.getElementById('q'+qi).classList.remove('active');
+  if (qi < questions.length - 1) {
+    document.getElementById('q'+(qi+1)).classList.add('active');
+    current = qi + 1;
+    updateProgress();
+  } else {
+    showResults();
+  }
+}
+
+function updateProgress() {
+  const pct = ((current) / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function showResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('progressFill').style.width = '100%';
+  const results = document.getElementById('results');
+  results.classList.add('show');
+  const pct = Math.round((score / questions.length) * 100);
+  const circle = document.getElementById('scoreCircle');
+  circle.innerHTML = `${score}/${questions.length}<div class="score-label">PUNTI</div>`;
+  let cls, title, desc;
+  if (pct >= 90) { cls='excellent'; title='Eccellente!'; desc='Hai dimostrato una comprensione approfondita dei contenuti del Modulo 1. Sei pronto per trasferire queste conoscenze ai tuoi colleghi.'; }
+  else if (pct >= 70) { cls='good'; title='Buon risultato!'; desc='Hai compreso i concetti principali del modulo. Ripassare le domande dove hai sbagliato ti darà una base ancora più solida per la formazione dei colleghi.'; }
+  else if (pct >= 50) { cls='pass'; title='Sufficiente'; desc='Hai raggiunto la sufficienza. Ti consigliamo di rivedere la dispensa, in particolare le sezioni su normativa, livelli d\'uso e criteri di scelta.'; }
+  else { cls='fail'; title='Da rivedere'; desc='Ti consigliamo di rivedere la dispensa del Modulo 1 prima di procedere. Concentrati su: AI Act art. 4, tre livelli d\'uso, bias e allucinazioni, criteri di scelta.'; }
+  circle.className = `score-circle ${cls}`;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultDesc').textContent = desc;
+  const detail = document.getElementById('resultDetail');
+  detail.innerHTML = questions.map((q, i) => {
+    const correct = answered[i] === q.correct || (answered.includes(i) && questions[i].opts[answered[i]] === questions[i].opts[q.correct]);
+    const wasCorrect = score > 0; // simplified - just show answer vs correct
+    const userAns = answered[i];
+    const isRight = userAns === q.correct;
+    return `<div class="result-detail-row ${isRight ? 'correct-row' : 'wrong-row'}">
+      <span class="result-icon">${isRight ? '✓' : '✗'}</span>
+      <span style="flex:1;font-size:.88rem"><strong>D${i+1}:</strong> ${q.q.substring(0,60)}…</span>
+    </div>`;
+  }).join('');
+}
+
+function restartQuiz() {
+  current = 0; score = 0; answered = [];
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('quizArea').style.display = '';
+  buildQuiz();
+}
+
+buildQuiz();
+</script>
+</body>
+</html>
